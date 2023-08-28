@@ -20,11 +20,11 @@ struct ChartboostCoreAppConfigFactory: AppConfigFactory {
     func makeAppConfig(from response: AppConfigRequest.ResponseBody, fallbackValues: AppConfig) -> AppConfig {
         AppConfig(
             coreInitializationDelayBase: asTimeInterval(response.coreInitializationDelayBaseMs) ?? fallbackValues.coreInitializationDelayBase,
-            maxCoreInitializationDelay: asTimeInterval(response.maxCoreInitializationDelayMs) ?? fallbackValues.maxCoreInitializationDelay,
-            maxCoreInitializationRetryCount: response.maxCoreInitializationRetryCount ?? fallbackValues.maxCoreInitializationRetryCount,
-            maxModuleInitializationDelay: asTimeInterval(response.maxModuleInitializationDelayMs) ?? fallbackValues.maxModuleInitializationDelay,
-            maxModuleInitializationRetryCount: response.maxModuleInitializationRetryCount ?? fallbackValues.maxModuleInitializationRetryCount,
+            coreInitializationDelayMax: asTimeInterval(response.coreInitializationDelayMaxMs) ?? fallbackValues.coreInitializationDelayMax,
+            coreInitializationRetryCountMax: response.coreInitializationRetryCountMax ?? fallbackValues.coreInitializationRetryCountMax,
             moduleInitializationDelayBase: asTimeInterval(response.moduleInitializationDelayBaseMs) ?? fallbackValues.moduleInitializationDelayBase,
+            moduleInitializationDelayMax: asTimeInterval(response.moduleInitializationDelayMaxMs) ?? fallbackValues.moduleInitializationDelayMax,
+            moduleInitializationRetryCountMax: response.moduleInitializationRetryCountMax ?? fallbackValues.moduleInitializationRetryCountMax,
             isChildDirected: response.isChildDirected ?? fallbackValues.isChildDirected,
             modules: response.modules?.map {
                 AppConfig.ModuleInfo(

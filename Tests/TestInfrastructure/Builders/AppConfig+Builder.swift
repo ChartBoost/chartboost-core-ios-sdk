@@ -9,21 +9,21 @@ extension AppConfig {
 
     static func build(
         coreInitializationDelayBase: TimeInterval = 5,
-        maxCoreInitializationDelay: TimeInterval = 5,
-        maxCoreInitializationRetryCount: Int = 5,
-        maxModuleInitializationDelay: TimeInterval = 5,
-        maxModuleInitializationRetryCount: Int = 5,
+        coreInitializationDelayMax: TimeInterval = 5,
+        coreInitializationRetryCountMax: Int = 5,
+        moduleInitializationDelayMax: TimeInterval = 5,
+        moduleInitializationRetryCountMax: Int = 5,
         moduleInitializationDelayBase: TimeInterval = 5,
         isChildDirected: Bool? = nil,
         modules: [AppConfig.ModuleInfo] = []
     ) -> AppConfig {
         AppConfig(
             coreInitializationDelayBase: coreInitializationDelayBase,
-            maxCoreInitializationDelay: maxCoreInitializationDelay,
-            maxCoreInitializationRetryCount: maxCoreInitializationRetryCount,
-            maxModuleInitializationDelay: maxModuleInitializationDelay,
-            maxModuleInitializationRetryCount: maxModuleInitializationRetryCount,
+            coreInitializationDelayMax: coreInitializationDelayMax,
+            coreInitializationRetryCountMax: coreInitializationRetryCountMax,
             moduleInitializationDelayBase: moduleInitializationDelayBase,
+            moduleInitializationDelayMax: moduleInitializationDelayMax,
+            moduleInitializationRetryCountMax: moduleInitializationRetryCountMax,
             isChildDirected: isChildDirected,
             modules: modules
         )

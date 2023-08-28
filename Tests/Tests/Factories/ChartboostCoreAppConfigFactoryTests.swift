@@ -16,21 +16,21 @@ class ChartboostCoreAppConfigFactoryTests: ChartboostCoreTestCase {
         let response = AppConfigRequest.ResponseBody(
             isChildDirected: nil,
             coreInitializationDelayBaseMs: nil,
-            maxCoreInitializationDelayMs: nil,
-            maxCoreInitializationRetryCount: nil,
+            coreInitializationDelayMaxMs: nil,
+            coreInitializationRetryCountMax: nil,
             moduleInitializationDelayBaseMs: nil,
-            maxModuleInitializationDelayMs: nil,
-            maxModuleInitializationRetryCount: nil,
+            moduleInitializationDelayMaxMs: nil,
+            moduleInitializationRetryCountMax: nil,
             schemaVersion: nil,
             modules: nil
         )
         let fallbackValues = AppConfig(
             coreInitializationDelayBase: 111,
-            maxCoreInitializationDelay: 222,
-            maxCoreInitializationRetryCount: 333,
-            maxModuleInitializationDelay: 444,
-            maxModuleInitializationRetryCount: 555,
-            moduleInitializationDelayBase: 666,
+            coreInitializationDelayMax: 222,
+            coreInitializationRetryCountMax: 333,
+            moduleInitializationDelayBase: 444,
+            moduleInitializationDelayMax: 555,
+            moduleInitializationRetryCountMax: 666,
             isChildDirected: true,
             modules: [
                 .init(
@@ -57,11 +57,11 @@ class ChartboostCoreAppConfigFactoryTests: ChartboostCoreTestCase {
         let response = AppConfigRequest.ResponseBody(
             isChildDirected: false,
             coreInitializationDelayBaseMs: 121,
-            maxCoreInitializationDelayMs: 232,
-            maxCoreInitializationRetryCount: 343,
+            coreInitializationDelayMaxMs: 232,
+            coreInitializationRetryCountMax: 343,
             moduleInitializationDelayBaseMs: 454,
-            maxModuleInitializationDelayMs: 565,
-            maxModuleInitializationRetryCount: 676,
+            moduleInitializationDelayMaxMs: 565,
+            moduleInitializationRetryCountMax: 676,
             schemaVersion: "some schema version",
             modules: [
                 .init(
@@ -84,11 +84,11 @@ class ChartboostCoreAppConfigFactoryTests: ChartboostCoreTestCase {
         )
         let fallbackValues = AppConfig(
             coreInitializationDelayBase: 111,
-            maxCoreInitializationDelay: 222,
-            maxCoreInitializationRetryCount: 333,
-            maxModuleInitializationDelay: 444,
-            maxModuleInitializationRetryCount: 555,
-            moduleInitializationDelayBase: 666,
+            coreInitializationDelayMax: 222,
+            coreInitializationRetryCountMax: 333,
+            moduleInitializationDelayBase: 444,
+            moduleInitializationDelayMax: 555,
+            moduleInitializationRetryCountMax: 666,
             isChildDirected: true,
             modules: [
                 .init(
@@ -110,11 +110,11 @@ class ChartboostCoreAppConfigFactoryTests: ChartboostCoreTestCase {
             appConfig,
             AppConfig(
                 coreInitializationDelayBase: 0.121,
-                maxCoreInitializationDelay: 0.232,
-                maxCoreInitializationRetryCount: 343,
-                maxModuleInitializationDelay: 0.565,
-                maxModuleInitializationRetryCount: 676,
+                coreInitializationDelayMax: 0.232,
+                coreInitializationRetryCountMax: 343,
                 moduleInitializationDelayBase: 0.454,
+                moduleInitializationDelayMax: 0.565,
+                moduleInitializationRetryCountMax: 676,
                 isChildDirected: false,
                 modules: [
                     .init(

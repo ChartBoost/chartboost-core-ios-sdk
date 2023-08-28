@@ -54,13 +54,13 @@ final class ChartboostCoreModuleInitializer: ModuleInitializer {
 
                 if let error {
                     // Initialization error
-                    if retryCount < self.appConfig.maxModuleInitializationRetryCount {
+                    if retryCount < self.appConfig.moduleInitializationRetryCountMax {
                         // Schedule a retry
                         let newRetryCount = retryCount + 1
                         let delay = Math.retryDelayInterval(
                             retryNumber: newRetryCount,
                             base: self.appConfig.moduleInitializationDelayBase,
-                            limit: self.appConfig.maxModuleInitializationDelay
+                            limit: self.appConfig.moduleInitializationDelayMax
                         )
                         
                         logger.error("Failed to initialize module \(self.module.moduleID) with error: \(error). Retry #\(newRetryCount) in \(delay) seconds.")

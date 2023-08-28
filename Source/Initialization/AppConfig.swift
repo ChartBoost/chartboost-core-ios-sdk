@@ -27,21 +27,21 @@ struct AppConfig: Codable, Equatable {
 
     /// The maximum time interval for scheduling a retry of the Core SDK initialization.
     /// See ``Math.retryDelayInterval(retryNumber:base:limit:)`` for more info.
-    var maxCoreInitializationDelay: TimeInterval
+    var coreInitializationDelayMax: TimeInterval
 
     /// The maximum number of times the Core SDK initialization will be retried automatically.
-    var maxCoreInitializationRetryCount: Int
-
-    /// The maximum time interval for scheduling a retry of a Core module initialization.
-    /// See ``Math.retryDelayInterval(retryNumber:base:limit:)`` for more info.
-    let maxModuleInitializationDelay: TimeInterval
-
-    /// The maximum number of times a Core module initialization will be retried automatically.
-    let maxModuleInitializationRetryCount: Int
+    var coreInitializationRetryCountMax: Int
 
     /// The base value to use when scheduling a retry of a Core module initialization.
     /// See ``Math.retryDelayInterval(retryNumber:base:limit:)`` for more info.
     let moduleInitializationDelayBase: TimeInterval
+
+    /// The maximum time interval for scheduling a retry of a Core module initialization.
+    /// See ``Math.retryDelayInterval(retryNumber:base:limit:)`` for more info.
+    let moduleInitializationDelayMax: TimeInterval
+
+    /// The maximum number of times a Core module initialization will be retried automatically.
+    let moduleInitializationRetryCountMax: Int
 
     /// Indicates if the app is marked as child-directed on the backend.
     let isChildDirected: Bool?

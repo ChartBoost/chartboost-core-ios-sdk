@@ -14,7 +14,7 @@ final class SDKInitializerMock: SDKInitializer {
     var initializeSDKModulesLastValue: [InitializableModule]?
     var initializeSDKModuleObserverLastValue: InitializableModuleObserver?
 
-    // MARK: - SessionInfoProvider
+    // MARK: - SDKInitializer
 
     func initializeSDK(
         with configuration: SDKConfiguration,

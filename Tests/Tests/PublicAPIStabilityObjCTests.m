@@ -62,17 +62,17 @@
     double screenHeight __unused = environment.screenHeight;
     double screenScale __unused = environment.screenScale;
     double screenWidth __unused = environment.screenWidth;
-    NSString *userAgent __unused = environment.userAgent;
     NSString *vendorID __unused = environment.vendorID;
     CBCVendorIDScope vendorIDScope __unused = environment.vendorIDScope;
     double volume __unused = environment.volume;
+    [environment userAgentWithCompletion:^(NSString * _Nonnull userAgent) { }];
 }
 
 /// Validates the AttributionEnvironment public APIs.
 - (void)testAttributionEnvironment {
     id<CBCAttributionEnvironment> environment = ChartboostCore.attributionEnvironment;
     NSString *advertisingID __unused = environment.advertisingID;
-    NSString *userAgent __unused = environment.userAgent;
+    [environment userAgentWithCompletion:^(NSString * _Nonnull userAgent) { }];
 }
 
 /// Validates the ChartboostCore public APIs.

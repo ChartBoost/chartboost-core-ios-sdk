@@ -13,6 +13,6 @@ public protocol AttributionEnvironment {
     /// The system advertising identifier (IFA).
     var advertisingID: String? { get }
 
-    /// The device user agent.
-    var userAgent: String? { get }
+    /// Obtain the device user agent asynchronously.
+    func userAgent(completion: @escaping (_ userAgent: String) -> Void)
 }
