@@ -14,6 +14,13 @@ final class InitializableModuleFactoryMock: InitializableModuleFactory {
     var makeModuleCredentialsAllValues: [[String: Any]?] = []
     var makeModuleReturnValues: [InitializableModuleMock] = []
 
+    func reset() {
+        makeModuleCallCount = 0
+        makeModuleClassNameAllValues = []
+        makeModuleCredentialsAllValues = []
+        makeModuleReturnValues = []
+    }
+
     // MARK: - AppConfigRepository
 
     func makeModule(className: String, credentials: [String: Any]?) -> InitializableModule? {

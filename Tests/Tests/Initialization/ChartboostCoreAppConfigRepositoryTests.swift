@@ -16,11 +16,11 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
             repository.config,
             AppConfig(
                 coreInitializationDelayBase: 1,
-                maxCoreInitializationDelay: 30,
-                maxCoreInitializationRetryCount: 3,
-                maxModuleInitializationDelay: 30,
-                maxModuleInitializationRetryCount: 3,
+                coreInitializationDelayMax: 30,
+                coreInitializationRetryCountMax: 3,
                 moduleInitializationDelayBase: 1,
+                moduleInitializationDelayMax: 30,
+                moduleInitializationRetryCountMax: 3,
                 isChildDirected: nil,
                 modules: []
             )
@@ -130,7 +130,7 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
         mocks.networkManager.sendCallCount = 0
         mocks.appConfigFactory.makeAppConfigCallCount = 0
         mocks.jsonRepository.writeCallCount = 0
-        mocks.appConfigFactory.makeAppConfigReturnValue = .build(coreInitializationDelayBase: 23.34, maxCoreInitializationRetryCount: 1234)
+        mocks.appConfigFactory.makeAppConfigReturnValue = .build(coreInitializationDelayBase: 23.34, coreInitializationRetryCountMax: 1234)
 
         let expectation = self.expectation(description: "wait for fetch completion")
 

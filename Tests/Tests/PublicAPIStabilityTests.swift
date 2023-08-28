@@ -51,17 +51,17 @@ class PublicAPIStabilityTests: XCTestCase {
         let _: Double = environment.screenHeight
         let _: Double = environment.screenScale
         let _: Double = environment.screenWidth
-        let _: String? = environment.userAgent
         let _: String? = environment.vendorID
         let _: VendorIDScope = environment.vendorIDScope
         let _: Double = environment.volume
+        environment.userAgent { _ in }
     }
 
     /// Validates the AttributionEnvironment public APIs.
     func testAttributionEnvironment() {
         let environment: AttributionEnvironment = ChartboostCore.attributionEnvironment
         let _: String? = environment.advertisingID
-        let _: String? = environment.userAgent
+        environment.userAgent { _ in }
     }
 
     /// Validates the ChartboostCore public APIs.

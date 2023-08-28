@@ -111,11 +111,11 @@ extension AppConfigRequest {
 
         let isChildDirected: Bool?
         let coreInitializationDelayBaseMs: Int?
-        let maxCoreInitializationDelayMs: Int?
-        let maxCoreInitializationRetryCount: Int?
+        let coreInitializationDelayMaxMs: Int?
+        let coreInitializationRetryCountMax: Int?
         let moduleInitializationDelayBaseMs: Int?
-        let maxModuleInitializationDelayMs: Int?
-        let maxModuleInitializationRetryCount: Int?
+        let moduleInitializationDelayMaxMs: Int?
+        let moduleInitializationRetryCountMax: Int?
         let schemaVersion: String?
         let modules: [Module]?
     }

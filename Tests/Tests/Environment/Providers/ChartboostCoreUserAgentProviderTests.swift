@@ -10,30 +10,69 @@ class ChartboostCoreUserAgentProviderTests: ChartboostCoreTestCase {
 
     let provider = ChartboostCoreUserAgentProvider()
 
-    /// Validates that initially there is no user agent.
-    func testInitialValues() {
-        XCTAssertNil(provider.userAgent)
-    }
-
     /// Validates that calling `updateUserAgent()` fetches a new user agent.
     func testUpdateUserAgent() {
-        provider.updateUserAgent()
+        let expectation = expectation(description: "wait for fetch user agent")
 
-        func assertUserAgentIsNotNil() {
-            XCTAssertNotNil(provider.userAgent)
+        provider.userAgent { userAgent in
+            XCTAssert(!userAgent.isEmpty)
+            expectation.fulfill()
         }
 
-        // Check if user agent was retrieved in a short time, in an effort to minimize the test time.
-        wait(0.5)
-        if provider.userAgent == nil {
-            // If user agent was not retrieved, try again in 2 seconds
-            wait(2)
-        }
-        if provider.userAgent == nil {
-            // If user agent is still not retrieved, try again in a long time
-            wait(10)
+        wait(for: [expectation], timeout: 5)
+    }
+
+    /// Validates nothing goes wrong after calling `updateUserAgent()` multiple times in different scenarios.
+    func testMultipleUpdateUserAgentCalls() {
+        let expectation1 = expectation(description: "wait for fetch user agent 1")
+        let expectation2 = expectation(description: "wait for fetch user agent 2")
+        let expectation3 = expectation(description: "wait for fetch user agent 3")
+        let expectation4 = expectation(description: "wait for fetch user agent 4")
+
+        // nested calls
+        provider.userAgent { [self] userAgent in
+            XCTAssert(!userAgent.isEmpty)
+
+            provider.userAgent { userAgent in
+                XCTAssert(!userAgent.isEmpty)
+                expectation1.fulfill()
+            }
         }
 
-        XCTAssertNotNil(provider.userAgent)
+        // nested calls again
+        provider.userAgent { [self] userAgent in
+            XCTAssert(!userAgent.isEmpty)
+
+            provider.userAgent { userAgent in
+                XCTAssert(!userAgent.isEmpty)
+                expectation2.fulfill()
+            }
+        }
+
+        // nested calls again in main thread
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [self] in
+            provider.userAgent { [self] userAgent in
+                XCTAssert(!userAgent.isEmpty)
+
+                provider.userAgent { userAgent in
+                    XCTAssert(!userAgent.isEmpty)
+                    expectation3.fulfill()
+                }
+            }
+        }
+
+        // nested calls again in background thread
+        DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2) { [self] in
+            provider.userAgent { [self] userAgent in
+                XCTAssert(!userAgent.isEmpty)
+
+                provider.userAgent { userAgent in
+                    XCTAssert(!userAgent.isEmpty)
+                    expectation4.fulfill()
+                }
+            }
+        }
+
+        wait(for: [expectation1, expectation2, expectation3, expectation4], timeout: 10)
     }
 }

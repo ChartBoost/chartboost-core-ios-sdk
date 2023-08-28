@@ -35,10 +35,18 @@ class EnvironmentTests: ChartboostCoreTestCase {
         XCTAssertEqual(environment.screenHeight, mocks.deviceInfoProvider.screenHeight)
         XCTAssertEqual(environment.screenScale, mocks.deviceInfoProvider.screenScale)
         XCTAssertEqual(environment.screenWidth, mocks.deviceInfoProvider.screenWidth)
-        XCTAssertEqual(environment.userAgent, mocks.userAgentProvider.userAgent)
         XCTAssertEqual(environment.vendorID, mocks.appTrackingInfoProvider.vendorID)
         XCTAssertEqual(environment.vendorIDScope, mocks.appTrackingInfoProvider.vendorIDScope)
         XCTAssertEqual(environment.volume, mocks.deviceInfoProvider.volume)
+
+        let expectation = expectation(description: "wait for fetch user agent")
+        environment.userAgent { [self] userAgent in
+            self.mocks.userAgentProvider.userAgent { [userAgent] anotherUserAgent in
+                XCTAssertEqual(userAgent, anotherUserAgent)
+                expectation.fulfill()
+            }
+        }
+        wait(for: [expectation], timeout: 10)
     }
 
     /// Validates that the IFA value is not provided if the user is underage, unless for the purpose of analytics.

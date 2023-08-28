@@ -12,11 +12,11 @@ import Foundation
 public final class ConsentStandard: NSObject, ExpressibleByStringLiteral {
 
     /// CCPA opt-in standard.
-    /// Possible values are: ``ConsentValue.denied``, ``ConsentValue.granted``, ``ConsentValue.doesNotApply``.
+    /// Possible values are: ``ConsentValue/denied``, ``ConsentValue/granted``, ``ConsentValue/doesNotApply``.
     public static let ccpaOptIn: ConsentStandard = "ccpa_opt_in"
 
     /// GDPR consent given standard.
-    /// Possible values are: ``ConsentValue.denied``, ``ConsentValue.granted``, ``ConsentValue.doesNotApply``.
+    /// Possible values are: ``ConsentValue/denied``, ``ConsentValue/granted``, ``ConsentValue/doesNotApply``.
     public static let gdprConsentGiven: ConsentStandard = "gdpr_consent_given"
 
     /// GPP standard.
