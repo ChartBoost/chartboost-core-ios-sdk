@@ -8,7 +8,7 @@ import UIKit
 /// The protocol to which a CMP adapter module must conform to.
 ///
 /// Core SDK identifies a CMP adapter from the list of modules it initializes based on conformance to this protocol.
-/// When the publisher uses Core's CMP APIs (the ``ChartboostCore.consent``) method calls are forwarded to a Core module
+/// When the publisher uses Core's CMP APIs (the ``ChartboostCore/consent``) method calls are forwarded to a Core module
 /// that conforms to ``ConsentAdapter``, and such a module is also expected to report consent status changes back to the
 /// Core SDK via its ``delegate`` property.
 @objc(CBCConsentAdapter)
@@ -22,13 +22,13 @@ public protocol ConsentAdapter: InitializableModule {
 
     /// Detailed consent status for each consent standard, as determined by the CMP.
     ///
-    /// Predefined consent standard constants, such as ``ConsentStandard.usp`` and ``ConsentStandard.tcf``, are provided
+    /// Predefined consent standard constants, such as ``ConsentStandard/usp`` and ``ConsentStandard/tcf``, are provided
     /// by Core. Adapters should use them when reporting the status of a common standard.
     /// Custom standards should only be used by adapters when a corresponding constant is not provided by the Core.
     ///
-    /// While Core also provides consent value constants, these are only applicable for the ``ConsentStandard.ccpa`` and
-    /// ``ConsentStandard.gdpr`` standards. For other standards a custom value should be provided (e.g. a IAB TCF string
-    /// for ``ConsentStandard.tcf``).
+    /// While Core also provides consent value constants, these are only applicable for the ``ConsentStandard/ccpaOptIn`` and
+    /// ``ConsentStandard/gdprConsentGiven`` standards. For other standards a custom value should be provided (e.g. a IAB TCF string
+    /// for ``ConsentStandard/tcf``).
     var consents: [ConsentStandard: ConsentValue] { get }
 
     /// The delegate to be notified whenever any change happens in the CMP consent status.

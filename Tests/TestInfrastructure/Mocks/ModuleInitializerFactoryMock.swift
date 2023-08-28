@@ -11,6 +11,12 @@ final class ModuleInitializerFactoryMock: ModuleInitializerFactory {
     var makeModuleInitializerModuleAllValues: [InitializableModule] = []
     var makeModuleInitializerReturnValues: [ModuleInitializerMock] = []
 
+    func reset() {
+        makeModuleInitializerCallCount = 0
+        makeModuleInitializerModuleAllValues = []
+        makeModuleInitializerReturnValues = []
+    }
+
     func makeModuleInitializer(module: InitializableModule) -> ModuleInitializer {
         makeModuleInitializerCallCount += 1
         makeModuleInitializerModuleAllValues.append(module)

@@ -11,7 +11,7 @@ import Foundation
 public final class ModuleInitializationResult: ChartboostCoreResult {
 
     /// The module that was initialized.
-    /// Note that the initialization operation may have failed. Use the ``error`` property to determine this.
+    /// Note that the initialization operation may have failed. Use the ``ChartboostCoreResult/error`` property to determine this.
     public let module: InitializableModule
 
     /// Initializes a result object with the provided information.

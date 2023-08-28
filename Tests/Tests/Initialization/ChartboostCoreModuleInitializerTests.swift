@@ -40,8 +40,8 @@ class ChartboostCoreModuleInitializerTests: ChartboostCoreTestCase {
     func testInitializeIfModuleFailsAllRetries() {
         // Set short retry values so the test runs quicker
         mocks.appConfigRepository.config = .build(
-            maxModuleInitializationDelay: 1,
-            maxModuleInitializationRetryCount: 3,
+            moduleInitializationDelayMax: 1,
+            moduleInitializationRetryCountMax: 3,
             moduleInitializationDelayBase: 0.1
         )
 
@@ -89,8 +89,8 @@ class ChartboostCoreModuleInitializerTests: ChartboostCoreTestCase {
     func testInitializeIfModuleSucceedsOnARetry() {
         // Set short retry values so the test runs quicker
         mocks.appConfigRepository.config = .build(
-            maxModuleInitializationDelay: 1,
-            maxModuleInitializationRetryCount: 3,
+            moduleInitializationDelayMax: 1,
+            moduleInitializationRetryCountMax: 3,
             moduleInitializationDelayBase: 0.1
         )
 

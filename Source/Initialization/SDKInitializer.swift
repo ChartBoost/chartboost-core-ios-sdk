@@ -86,7 +86,7 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
 
             // Initial setup that has effect only on the first call
             updateSession()
-            updateUserAgent()
+            userAgentProvider.userAgent(completion: { _ in })
 
             // Update the module observer that will receive module initialization callbacks
             self.moduleObserver = moduleObserver
@@ -122,14 +122,14 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
                         self.instantiateAndInitializeBackendModules()
                     }
                     // Fetch failure: retry
-                    else if retryCount < self.appConfig.maxCoreInitializationRetryCount {
+                    else if retryCount < self.appConfig.coreInitializationRetryCountMax {
                         let newRetryCount = retryCount + 1
                         self.state = .notInitialized(retryCount: newRetryCount)
 
                         let delay = Math.retryDelayInterval(
                             retryNumber: newRetryCount,
                             base: self.appConfig.coreInitializationDelayBase,
-                            limit: self.appConfig.maxCoreInitializationDelay
+                            limit: self.appConfig.coreInitializationDelayMax
                         )
                         logger.error("Failed to initialize Core. Retry #\(newRetryCount) in \(delay) seconds.")
                         self.initializationRetryTimer = .scheduledTimer(withTimeInterval: delay) { [weak self] _ in
@@ -143,7 +143,7 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
                     // Fetch failure: done
                     else {
                         self.state = .notInitialized()
-                        logger.error("Failed to initialize Core. Reached limit of \(self.appConfig.maxCoreInitializationRetryCount) retries.")
+                        logger.error("Failed to initialize Core. Reached limit of \(self.appConfig.coreInitializationRetryCountMax) retries.")
                     }
                 }
             }
@@ -188,13 +188,6 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
     private func updateSession() {
         if sessionInfoProvider.session == nil {
             sessionInfoProvider.reset()
-        }
-    }
-
-    /// Fetches the user agent.
-    private func updateUserAgent() {
-        if userAgentProvider.userAgent == nil {
-            userAgentProvider.updateUserAgent()
         }
     }
 

@@ -21,7 +21,7 @@ public protocol ConsentManagementPlatform: AnyObject {
     var shouldCollectConsent: Bool { get }
 
     /// The current consent status determined by the CMP.
-    /// Returns ``ConsentStatus.unknown`` if no consent adapter module is available.
+    /// Returns ``ConsentStatus/unknown`` if no consent adapter module is available.
     var consentStatus: ConsentStatus { get }
 
     /// Detailed consent status for each consent standard, as determined by the CMP.

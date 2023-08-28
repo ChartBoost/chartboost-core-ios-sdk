@@ -26,11 +26,11 @@ private extension AppConfig {
     static var `default`: AppConfig {
         AppConfig(
             coreInitializationDelayBase: 1,
-            maxCoreInitializationDelay: 30,
-            maxCoreInitializationRetryCount: 3,
-            maxModuleInitializationDelay: 30,
-            maxModuleInitializationRetryCount: 3,
+            coreInitializationDelayMax: 30,
+            coreInitializationRetryCountMax: 3,
             moduleInitializationDelayBase: 1,
+            moduleInitializationDelayMax: 30,
+            moduleInitializationRetryCountMax: 3,
             isChildDirected: nil,
             modules: []
         )

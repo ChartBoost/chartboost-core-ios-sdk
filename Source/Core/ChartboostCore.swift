@@ -40,7 +40,7 @@ public final class ChartboostCore: NSObject {
     /// - Initialize all the provided modules (both the ones explicitly passed on a call to this method and
     /// those defined on the dashboard, skipping duplicates).
     /// - Keep all modules successfully initialized alive by creating strong references to them.
-    /// - Set a module that conforms to ``ConsentAdapter`` as the backing CMP for ``ChartboostCore.consent``,
+    /// - Set a module that conforms to ``ConsentAdapter`` as the backing CMP for ``ChartboostCore/consent``,
     /// and thus enabling CMP functionalities.
     ///
     /// - parameter configuration: Initialization configuration parameters.
@@ -62,7 +62,7 @@ public final class ChartboostCore: NSObject {
     /// - Fetch an app config from the Chartboost Core dashboard with all the info needed for Core and its
     /// modules to function.
     /// - Instantiate and initialize modules defined on the Charboost Core dashboard.
-    /// - Set a module that conforms to ``ConsentAdapter`` as the backing CMP for ``ChartboostCore.consent``,
+    /// - Set a module that conforms to ``ConsentAdapter`` as the backing CMP for ``ChartboostCore/consent``,
     /// and thus enabling CMP functionalities.
     ///
     /// - parameter configuration: Initialization configuration parameters.
@@ -77,7 +77,7 @@ public final class ChartboostCore: NSObject {
 
     /// The version of the Core SDK.
     public static var sdkVersion: String {
-        "0.1.0" // this is replaced by our scripts when generating a new release branch, together with the podspec version
+        "0.2.0" // this is replaced by our scripts when generating a new release branch, together with the podspec version
     }
 
     // Make NSObject init private to prevent users from instantiating this class.

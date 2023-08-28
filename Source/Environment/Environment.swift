@@ -125,10 +125,6 @@ final class Environment: AdvertisingEnvironment, AnalyticsEnvironment, Attributi
         deviceInfoProvider.screenWidth
     }
 
-    var userAgent: String? {
-        userAgentProvider.userAgent
-    }
-
     var vendorID: String? {
         appTrackingInfoProvider.vendorID
     }
@@ -139,5 +135,9 @@ final class Environment: AdvertisingEnvironment, AnalyticsEnvironment, Attributi
 
     var volume: Double {
         deviceInfoProvider.volume
+    }
+
+    func userAgent(completion: @escaping UserAgentCompletion) {
+        userAgentProvider.userAgent(completion: completion)
     }
 }

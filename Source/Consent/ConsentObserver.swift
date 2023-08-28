@@ -22,11 +22,11 @@ public protocol ConsentObserver: AnyObject {
     /// are called.
     func onConsentModuleReady()
 
-    /// Called whenever the ``ConsentManagementPlatform.consentStatus`` value changed.
+    /// Called whenever the ``ConsentManagementPlatform/consentStatus`` value changed.
     /// - parameter status: The new consent status.
     func onConsentStatusChange(_ status: ConsentStatus)
 
-    /// Called whenever the ``ConsentManagementPlatform.consents`` value changed.
+    /// Called whenever the ``ConsentManagementPlatform/consents`` value changed.
     /// - parameter standard: The standard that changed.
     /// - parameter value: The new value for the standard, `nil` if the entry was removed.
     func onConsentChange(standard: ConsentStandard, value: ConsentValue?)

@@ -5,14 +5,13 @@
 
 import WebKit
 
+typealias UserAgentCompletion = (_ userAgent: String) -> Void
+
 /// Provides information related to the user agent.
 protocol UserAgentProvider {
 
-    /// The device user agent, or `nil` if one hasn't been fetched yet.
-    var userAgent: String? { get }
-
-    /// Tries to fetch a new value for the user agent.
-    func updateUserAgent()
+    /// Obtain the user agent asynchronously.
+    func userAgent(completion: @escaping UserAgentCompletion)
 }
 
 /// Core's concrete implementation of ``UserAgentProvider``.
@@ -25,21 +24,46 @@ final class ChartboostCoreUserAgentProvider: UserAgentProvider {
     private var webView: WKWebView?
 
     /// The currently cached value for user agent.
-    @Atomic private(set) var userAgent: String?
+    private var userAgent: String?
 
-    func updateUserAgent() {
+    /// For preventing repetitive expensive fetch.
+    private var isFetchingUserAgent = false
+
+    /// An array of completion handlers that are called as soon as obtaining the user agent.
+    private var completionHandlers: [UserAgentCompletion] = []
+
+    func userAgent(completion: @escaping UserAgentCompletion) {
         logger.debug("Updating user agent...")
 
         // Dispatch on main queue since we are using UI-related APIs.
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
+        DispatchQueue.main.async { [self] in
+            
+            // If the user agent is already available, return immediately.
+            if let userAgent = self.userAgent {
+                logger.debug("Obtained user agent: \(userAgent)")
+                completion(userAgent)
+                return
+            }
 
-            // Create a webview, execute a JS command to obtain the user agent.
+            self.completionHandlers.append(completion)
+
+            // If fetch is already in progress, return immediately.
+            if self.isFetchingUserAgent {
+                return
+            }
+
+            // Create a webview, execute a JS command to obtain the user agent. This is an expensive operation.
             let webView = WKWebView()
             self.webView = webView
+            self.isFetchingUserAgent = true
+
             webView.evaluateJavaScript("navigator.userAgent") { [weak self] (result, error) in
+
+                // iOS calls this completion on main thread already, thus no need to use `DispatchQueue.main` here.
+
                 defer {
                     self?.webView = nil
+                    self?.isFetchingUserAgent = false
                 }
 
                 // Failure
@@ -50,9 +74,13 @@ final class ChartboostCoreUserAgentProvider: UserAgentProvider {
 
                 // Success
                 self?.userAgent = result
-                logger.info("Updated user agent")
+                logger.info("Updated user agent: \(result)")
+
+                self?.completionHandlers.forEach { completion in
+                    completion(result)
+                }
+                self?.completionHandlers.removeAll()
             }
         }
     }
 }
-

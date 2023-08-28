@@ -9,13 +9,16 @@ final class UserAgentProviderMock: UserAgentProvider {
 
     // MARK: - Call Counts and Return Values
 
-    var updateUserAgentCallCount = 0
+    var userAgentFetchCount = 0
+    var privateCachedUserAgent: String? = nil
 
-    // MARK: - SessionInfoProvider
+    // MARK: - UserAgentProvider
 
-    var userAgent: String? = "some user agent"
-
-    func updateUserAgent() {
-        updateUserAgentCallCount += 1
+    func userAgent(completion: @escaping UserAgentCompletion) {
+        if privateCachedUserAgent == nil {
+            userAgentFetchCount += 1
+        }
+        privateCachedUserAgent = "some user agent"
+        completion("some user agent")
     }
 }

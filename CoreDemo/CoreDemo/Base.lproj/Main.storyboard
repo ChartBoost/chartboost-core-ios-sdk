@@ -109,7 +109,7 @@
                                                 <segmentedControl opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="pmk-MU-Ugj">
                                                     <rect key="frame" x="106" y="8.6666666666666714" width="181" height="32"/>
                                                     <segments>
-                                                        <segment title="Swfit"/>
+                                                        <segment title="Swift"/>
                                                         <segment title="Objective C"/>
                                                     </segments>
                                                 </segmentedControl>

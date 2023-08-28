@@ -10,22 +10,22 @@ extension AppConfigRequest.ResponseBody {
     static func build(
         isChildDirected: Bool? = true,
         coreInitializationDelayBaseMs: Int? = 2,
-        maxCoreInitializationDelayMs: Int? = 3,
-        maxCoreInitializationRetryCount: Int? = 4,
+        coreInitializationDelayMaxMs: Int? = 3,
+        coreInitializationRetryCountMax: Int? = 4,
         moduleInitializationDelayBaseMs: Int? = 5,
-        maxModuleInitializationDelayMs: Int? = 6,
-        maxModuleInitializationRetryCount: Int? = 7,
+        moduleInitializationDelayMaxMs: Int? = 6,
+        moduleInitializationRetryCountMax: Int? = 7,
         schemaVersion: String? = "some schema version",
         modules: [Module]? = []
     ) -> AppConfigRequest.ResponseBody {
         AppConfigRequest.ResponseBody(
             isChildDirected: isChildDirected,
             coreInitializationDelayBaseMs: coreInitializationDelayBaseMs,
-            maxCoreInitializationDelayMs: maxCoreInitializationDelayMs,
-            maxCoreInitializationRetryCount: maxCoreInitializationRetryCount,
+            coreInitializationDelayMaxMs: coreInitializationDelayMaxMs,
+            coreInitializationRetryCountMax: coreInitializationRetryCountMax,
             moduleInitializationDelayBaseMs: moduleInitializationDelayBaseMs,
-            maxModuleInitializationDelayMs: maxModuleInitializationDelayMs,
-            maxModuleInitializationRetryCount: maxModuleInitializationRetryCount,
+            moduleInitializationDelayMaxMs: moduleInitializationDelayMaxMs,
+            moduleInitializationRetryCountMax: moduleInitializationRetryCountMax,
             schemaVersion: schemaVersion,
             modules: modules
         )

@@ -52,11 +52,13 @@ final class EnvironmentMock: AdvertisingEnvironment, AnalyticsEnvironment, Attri
 
     var screenWidth: Double = 9403.44
 
-    var userAgent: String? = "some user agent"
-
     var vendorID: String? = "some vendor id"
 
     var vendorIDScope: ChartboostCoreSDK.VendorIDScope = .developer
 
     var volume: Double = 0.87
+
+    func userAgent(completion: @escaping (String) -> Void) {
+        completion("some user agent")
+    }
 }
