@@ -12,8 +12,12 @@ protocol ModuleInitializer: AnyObject {
     var module: InitializableModule { get }
 
     /// Initializes the module.
+    /// - parameter configuration: A ``ModuleInitializationConfiguration`` for configuring the module.
     /// - parameter completion: A completion handler to be executed when the initialization operation is done.
-    func initialize(completion: @escaping (ModuleInitializationResult) -> Void)
+    func initialize(
+        configuration: ModuleInitializationConfiguration,
+        completion: @escaping (ModuleInitializationResult) -> Void
+    )
 }
 
 /// Core's concrete implementation of ``ModuleInitializer``.
@@ -34,16 +38,16 @@ final class ChartboostCoreModuleInitializer: ModuleInitializer {
         self.queue = queue
     }
 
-    func initialize(completion: @escaping (ModuleInitializationResult) -> Void) {
-        initialize(retryCount: 0, completion: completion)
+    func initialize(configuration: ModuleInitializationConfiguration, completion: @escaping (ModuleInitializationResult) -> Void) {
+        initialize(configuration: configuration, retryCount: 0, completion: completion)
     }
 
-    private func initialize(retryCount: Int, completion: @escaping (ModuleInitializationResult) -> Void) {
+    private func initialize(configuration: ModuleInitializationConfiguration, retryCount: Int, completion: @escaping (ModuleInitializationResult) -> Void) {
 
         let startDate = Date()
 
         // Start module initialization
-        module.initialize { [weak self] error in
+        module.initialize(configuration: configuration) { [weak self] error in
             guard let self else { return }
 
             self.queue.async {
@@ -69,7 +73,7 @@ final class ChartboostCoreModuleInitializer: ModuleInitializer {
                             self.queue.async {
                                 // Retry module initialization
                                 logger.info("Retrying initialization of module \(self.module.moduleID)...")
-                                self.initialize(retryCount: newRetryCount, completion: completion)
+                                self.initialize(configuration: configuration, retryCount: newRetryCount, completion: completion)
                             }
                         }
                     } else {

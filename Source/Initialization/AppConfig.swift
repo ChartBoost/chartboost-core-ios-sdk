@@ -23,14 +23,14 @@ struct AppConfig: Codable, Equatable {
 
     /// The base value to use when scheduling a retry of the Core SDK initialization.
     /// See ``Math.retryDelayInterval(retryNumber:base:limit:)`` for more info.
-    var coreInitializationDelayBase: TimeInterval
+    let coreInitializationDelayBase: TimeInterval
 
     /// The maximum time interval for scheduling a retry of the Core SDK initialization.
     /// See ``Math.retryDelayInterval(retryNumber:base:limit:)`` for more info.
-    var coreInitializationDelayMax: TimeInterval
+    let coreInitializationDelayMax: TimeInterval
 
     /// The maximum number of times the Core SDK initialization will be retried automatically.
-    var coreInitializationRetryCountMax: Int
+    let coreInitializationRetryCountMax: Int
 
     /// The base value to use when scheduling a retry of a Core module initialization.
     /// See ``Math.retryDelayInterval(retryNumber:base:limit:)`` for more info.

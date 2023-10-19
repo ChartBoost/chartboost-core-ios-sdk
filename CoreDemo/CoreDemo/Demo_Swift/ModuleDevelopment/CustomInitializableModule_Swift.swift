@@ -40,7 +40,7 @@ final class CustomInitializableModule_Swift: NSObject, InitializableModule {
     }
 
     // The `ChartboostCore` SDK calls this to initialize the module.
-    func initialize(completion: @escaping (Error?) -> Void) {
+    func initialize(configuration: ModuleInitializationConfiguration, completion: @escaping (Error?) -> Void) {
         let errorHappend = Bool.random()
 
         if errorHappend {

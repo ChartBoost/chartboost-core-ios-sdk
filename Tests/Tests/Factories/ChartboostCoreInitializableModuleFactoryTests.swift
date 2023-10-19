@@ -42,7 +42,10 @@ public final class TestModule: InitializableModule {
         self.credentials = credentials
     }
 
-    public func initialize(completion: @escaping (Error?) -> Void) {
+    public func initialize(
+        configuration: ModuleInitializationConfiguration,
+        completion: @escaping (Error?) -> Void
+    ) {
 
     }
 }

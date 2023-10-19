@@ -27,10 +27,12 @@ public protocol InitializableModule: AnyObject {
     init(credentials: [String: Any]?)
 
     /// Sets up the module to make it ready to be used.
-    /// - completion: A completion handler to be executed when the module is done initializing.
+    /// - parameter configuration: A ``ModuleInitializationConfiguration`` for configuring the module.
+    /// - parameter completion: A completion handler to be executed when the module is done initializing.
     /// An error should be passed if the initialization failed, whereas `nil` should be passed if it succeeded.
-    @objc(initializeWithCompletion:)
+    @objc(initializeWithConfiguration:completion:)
     func initialize(
+        configuration: ModuleInitializationConfiguration,
         completion: @escaping (Error?) -> Void
     )
 }

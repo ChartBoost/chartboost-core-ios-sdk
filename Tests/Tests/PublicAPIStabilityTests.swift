@@ -54,14 +54,18 @@ class PublicAPIStabilityTests: XCTestCase {
         let _: String? = environment.vendorID
         let _: VendorIDScope = environment.vendorIDScope
         let _: Double = environment.volume
-        environment.userAgent { _ in }
+        environment.userAgent { userAgent in
+            let _: String? = userAgent
+        }
     }
 
     /// Validates the AttributionEnvironment public APIs.
     func testAttributionEnvironment() {
         let environment: AttributionEnvironment = ChartboostCore.attributionEnvironment
         let _: String? = environment.advertisingID
-        environment.userAgent { _ in }
+        environment.userAgent { userAgent in
+            let _: String? = userAgent
+        }
     }
 
     /// Validates the ChartboostCore public APIs.
@@ -76,6 +80,12 @@ class PublicAPIStabilityTests: XCTestCase {
         ChartboostCore.initializeSDK(with: SDKConfiguration(chartboostAppID: ""), modules: [], moduleObserver: nil)
         ChartboostCore.initializeSDK(with: .init(chartboostAppID: "some app ID"), moduleObserver: self)
         ChartboostCore.initializeSDK(with: SDKConfiguration(chartboostAppID: "some app ID"), modules: [InitializableModuleMock()], moduleObserver: self)
+
+        let _: LogLevel = ChartboostCore.logLevel
+        ChartboostCore.logLevel = .warning
+
+        ChartboostCore.attachLogHandler(self)
+        ChartboostCore.detachLogHandler(self)
     }
 
     /// Validates the ChartboostCoreResult public APIs.
@@ -120,13 +130,19 @@ class PublicAPIStabilityTests: XCTestCase {
 
             let _: String = adapter.moduleID
             let _: String = adapter.moduleVersion
+            let config: ModuleInitializationConfiguration? = nil
 
-            adapter.initialize { error in
-                let _: Error? = error
+            if let config {
+                let _: String = adapter.moduleID
+                let _: String = adapter.moduleVersion
+
+                adapter.initialize(configuration: config) { error in
+                    let _: Error? = error
+                }
+                adapter.initialize(configuration: config, completion: { (error: Error?) in
+                    let _: Error? = error
+                })
             }
-            adapter.initialize(completion: { (error: Error?) in
-                let _: Error? = error
-            })
 
             adapter.log("", level: .trace)
             adapter.log("", level: .debug)
@@ -237,14 +253,15 @@ class PublicAPIStabilityTests: XCTestCase {
     /// Validates the InitializableModule public APIs.
     func testInitializableModule() {
         let module: InitializableModule? = nil
-        if let module {
+        let config: ModuleInitializationConfiguration? = nil
+        if let module, let config {
             let _: String = module.moduleID
             let _: String = module.moduleVersion
 
-            module.initialize { error in
+            module.initialize(configuration: config) { error in
                 let _: Error? = error
             }
-            module.initialize(completion: { (error: Error?) in
+            module.initialize(configuration: config, completion: { (error: Error?) in
                 let _: Error? = error
             })
         }
@@ -259,6 +276,27 @@ class PublicAPIStabilityTests: XCTestCase {
         }
     }
 
+    /// Validates the LogEntry public APIs.
+    func testLogEntry() {
+        let logEntry: LogEntry? = nil
+        if let logEntry {
+            let _: String = logEntry.message
+            let _: String = logEntry.subsystem
+            let _: String = logEntry.category
+            let _: Date = logEntry.date
+            let _: LogLevel = logEntry.logLevel
+        }
+    }
+
+    /// Validates the LogHandler public APIs.
+    func testLogHandler() {
+        let logHandler: LogHandler? = nil
+        let logEntry: LogEntry? = nil
+        if let logHandler, let logEntry {
+            logHandler.handle(logEntry)
+        }
+    }
+
     /// Validates the LogLevel public APIs.
     func testLogLevel() {
         let _: LogLevel = .trace
@@ -269,6 +307,16 @@ class PublicAPIStabilityTests: XCTestCase {
         let _: LogLevel = .none
 
         let _: Int = LogLevel.info.rawValue
+        let _: String = LogLevel.info.description
+    }
+
+
+    /// Validates the ModuleInitializationResult public APIs.
+    func testModuleInitializationConfiguration() {
+        let config: ModuleInitializationConfiguration? = nil
+        if let config {
+            let _: String = config.chartboostAppID
+        }
     }
 
     /// Validates the ModuleInitializationResult public APIs.
@@ -304,6 +352,29 @@ class PublicAPIStabilityTests: XCTestCase {
         publisherMetadata.setPlayerID("")
         publisherMetadata.setPublisherAppID("")
         publisherMetadata.setPublisherSessionID("")
+        let observer: PublisherMetadataObserver? = nil
+        if let observer {
+            publisherMetadata.addObserver(observer)
+            publisherMetadata.removeObserver(observer)
+        }
+    }
+
+    /// Validates the PublisherMetadataObserver public APIs.
+    func testPublisherMetadataObserver() {
+        let observer: PublisherMetadataObserver? = nil
+        observer?.onChange(.playerID)
+    }
+
+    /// Validates the PublisherMetadata.Property public APIs.
+    func testPublisherMetadataProperty() {
+        let _: PublisherMetadata.Property = .frameworkName
+        let _: PublisherMetadata.Property = .frameworkVersion
+        let _: PublisherMetadata.Property = .isUserUnderage
+        let _: PublisherMetadata.Property = .playerID
+        let _: PublisherMetadata.Property = .publisherAppID
+        let _: PublisherMetadata.Property = .publisherSessionID
+
+        let _: String = PublisherMetadata.Property.frameworkName.description
     }
 
     /// Validates the SDKConfiguration public APIs.
@@ -353,6 +424,7 @@ class PublicAPIStabilityTestsInitializableModule: InitializableModule {
     }
 
     func initialize(
+        configuration: ModuleInitializationConfiguration,
         completion: @escaping (Error?) -> Void
     ) {
 
@@ -370,6 +442,7 @@ class PublicAPIStabilityTestsConsentAdapter: ConsentAdapter {
     }
 
     func initialize(
+        configuration: ModuleInitializationConfiguration,
         completion: @escaping (Error?) -> Void
     ) {
 
@@ -441,6 +514,20 @@ extension PublicAPIStabilityTests: ConsentManagementPlatform {
     }
 
     func removeObserver(_ observer: ConsentObserver) {
+
+    }
+}
+
+extension PublicAPIStabilityTests: PublisherMetadataObserver {
+
+    func onChange(_ property: PublisherMetadata.Property) {
+
+    }
+}
+
+extension PublicAPIStabilityTests: LogHandler {
+
+    func handle(_ entry: LogEntry) {
 
     }
 }

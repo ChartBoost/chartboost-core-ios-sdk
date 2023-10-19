@@ -28,6 +28,7 @@ class InitializableModuleMock: InitializableModule {
     }
 
     func initialize(
+        configuration: ModuleInitializationConfiguration,
         completion: @escaping (Error?) -> Void
     ) {
         initializeCallCount += 1

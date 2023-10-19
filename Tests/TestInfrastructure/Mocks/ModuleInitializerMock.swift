@@ -12,7 +12,10 @@ final class ModuleInitializerMock: ModuleInitializer {
 
     var module: InitializableModule = InitializableModuleMock()
 
-    func initialize(completion: @escaping (ModuleInitializationResult) -> Void) {
+    func initialize(
+        configuration: ModuleInitializationConfiguration,
+        completion: @escaping (ModuleInitializationResult) -> Void
+    ) {
         initializeCallCount += 1
         initializeCompletionLastValue = completion
     }

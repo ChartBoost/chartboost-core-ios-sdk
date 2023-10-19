@@ -14,5 +14,8 @@ public protocol AttributionEnvironment {
     var advertisingID: String? { get }
 
     /// Obtain the device user agent asynchronously.
-    func userAgent(completion: @escaping (_ userAgent: String) -> Void)
+    /// - parameter completion: Handler executed at the end of the user agent fetch operation.
+    /// It returns either a valid string value or `nil` if the fetch fails.
+    /// If a valid value is already cached, the completion executes immediately.
+    func userAgent(completion: @escaping (_ userAgent: String?) -> Void)
 }
