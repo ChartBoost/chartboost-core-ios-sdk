@@ -107,6 +107,7 @@ extension ChartboostCoreNetworkManager {
             // Parse response data
             let responseBodyResult = Result<Request.ResponseBody?, Error> {
                 if let data {
+                    logger.trace("Response data: \(String(data: data, encoding: .utf8) ?? "<error>")")
                     return try Request.ResponseBodyParser.parse(data, for: request)
                 } else {
                     return nil

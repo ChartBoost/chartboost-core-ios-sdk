@@ -77,7 +77,27 @@ public final class ChartboostCore: NSObject {
 
     /// The version of the Core SDK.
     public static var sdkVersion: String {
-        "0.2.0" // this is replaced by our scripts when generating a new release branch, together with the podspec version
+        "0.3.0" // this is replaced by our scripts when generating a new release branch, together with the podspec version
+    }
+
+    /// The Chartboost Core console log level.
+    ///
+    /// Defaults to ``LogLevel/info``.
+    public static var logLevel: LogLevel {
+        get { Logger.consoleLogHandler.logLevel }
+        set { Logger.consoleLogHandler.logLevel = newValue }
+    }
+
+    /// Attach a custom logger handler to the logging system.
+    /// - Parameter handler: A custom class that conforms to the ``LogHandler`` protocol.
+    public static func attachLogHandler(_ handler: LogHandler) {
+        Logger.attachHandler(handler)
+    }
+
+    /// Detach a custom logger handler from the logging system.
+    /// - Parameter handler: A custom class that conforms to the ``LogHandler`` protocol.
+    public static func detachLogHandler(_ handler: LogHandler) {
+        Logger.detachHandler(handler)
     }
 
     // Make NSObject init private to prevent users from instantiating this class.

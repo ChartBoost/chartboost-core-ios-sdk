@@ -5,12 +5,15 @@
 
 import WebKit
 
-typealias UserAgentCompletion = (_ userAgent: String) -> Void
+typealias UserAgentCompletion = (_ userAgent: String?) -> Void
 
 /// Provides information related to the user agent.
 protocol UserAgentProvider {
 
     /// Obtain the user agent asynchronously.
+    /// - parameter completion: Handler executed at the end of the user agent fetch operation.
+    /// It returns either a valid string value or `nil` if the fetch fails.
+    /// If a valid value is already cached, the completion executes immediately.
     func userAgent(completion: @escaping UserAgentCompletion)
 }
 
@@ -61,9 +64,18 @@ final class ChartboostCoreUserAgentProvider: UserAgentProvider {
 
                 // iOS calls this completion on main thread already, thus no need to use `DispatchQueue.main` here.
 
+                guard let self else { 
+                    completion(nil)
+                    return
+                }
+
                 defer {
-                    self?.webView = nil
-                    self?.isFetchingUserAgent = false
+                    self.completionHandlers.forEach { completion in
+                        completion(self.userAgent)
+                    }
+                    self.completionHandlers.removeAll()
+                    self.webView = nil
+                    self.isFetchingUserAgent = false
                 }
 
                 // Failure
@@ -73,13 +85,8 @@ final class ChartboostCoreUserAgentProvider: UserAgentProvider {
                 }
 
                 // Success
-                self?.userAgent = result
+                self.userAgent = result
                 logger.info("Updated user agent: \(result)")
-
-                self?.completionHandlers.forEach { completion in
-                    completion(result)
-                }
-                self?.completionHandlers.removeAll()
             }
         }
     }

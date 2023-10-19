@@ -96,7 +96,7 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
                 logger.debug("No modules to initialize provided in the initialization call.")
             } else {
                 logger.debug("Initializing client-side modules...")
-                initializeModules(modules)
+                initializeModules(modules, sdkConfig: configuration)
             }
             // Fetch an app config (with retries) and then initialize backend modules
             fetchAppConfigAndInitializeBackendModules(with: configuration)
@@ -119,7 +119,8 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
                     if error == nil {
                         // Initialize backend modules
                         self.state = .initialized
-                        self.instantiateAndInitializeBackendModules()
+                        logger.info("Core initialization completed")
+                        self.instantiateAndInitializeBackendModules(with: configuration)
                     }
                     // Fetch failure: retry
                     else if retryCount < self.appConfig.coreInitializationRetryCountMax {
@@ -153,12 +154,12 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
         case .initialized:
             // Retry initialization of backend modules that previously failed.
             logger.debug("Core already initialized")
-            instantiateAndInitializeBackendModules()
+            instantiateAndInitializeBackendModules(with: configuration)
         }
     }
 
     /// Gets list of modules from backend config, instantiates them via reflection, and initializes them.
-    private func instantiateAndInitializeBackendModules() {
+    private func instantiateAndInitializeBackendModules(with configuration: SDKConfiguration) {
         // Instantiate modules skipping already initialized or initializing ones.
         let modules = appConfig.modules.compactMap { moduleInfo in
             guard !initializedModules.map(\.moduleID).contains(moduleInfo.identifier)
@@ -180,7 +181,7 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
             logger.debug("No modules to initialize found in app config.")
         } else {
             logger.debug("Initializing modules in app config...")
-            initializeModules(modules)
+            initializeModules(modules, sdkConfig: configuration)
         }
     }
 
@@ -211,7 +212,7 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
     }
 
     /// Initializes Core modules.
-    private func initializeModules(_ modules: [InitializableModule]) {
+    private func initializeModules(_ modules: [InitializableModule], sdkConfig: SDKConfiguration) {
         // Pick the consent adapter module if not set yet
         let (newCMP, droppedCMPs) = pickNewCMP(from: modules)
 
@@ -244,7 +245,7 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
                 let initializer = moduleInitializerFactory.makeModuleInitializer(module: module)
                 moduleInitializers.append(initializer)
                 // Start the module initialization
-                initializer.initialize { [weak self, weak initializer] result in
+                initializer.initialize(configuration: .init(sdkConfiguration: sdkConfig)) { [weak self, weak initializer] result in
                     guard let self else { return }
                     self.queue.async {
                         // Keep the initialized module if success, discard it if failure.

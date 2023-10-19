@@ -14,7 +14,8 @@
     CBCConsentManagementPlatform,
     CBCConsentObserver,
     CBCInitializableModule,
-    CBCInitializableModuleObserver
+    CBCInitializableModuleObserver,
+    CBCLogHandler
 >
 
 @end
@@ -92,6 +93,12 @@
     [ChartboostCore initializeSDKWithConfiguration:[[CBCSDKConfiguration alloc] initWithChartboostAppID:@""]
                                            modules:@[self]
                                     moduleObserver:self];
+
+    CBCLogLevel logLevel __unused = ChartboostCore.logLevel;
+    ChartboostCore.logLevel = CBCLogLevelWarning;
+
+    [ChartboostCore attachLogHandler:self];
+    [ChartboostCore detachLogHandler:self];
 }
 
 /// Validates the CBCResult public APIs.
@@ -125,9 +132,12 @@
     NSString *moduleName __unused = adapter.moduleID;
     NSString *moduleVersion __unused = adapter.moduleVersion;
 
-    [adapter initializeWithCompletion:^(NSError *error) {
-        NSError *err __unused = error;
-    }];
+    CBCModuleInitializationConfiguration *config;
+    if (config) {
+        [adapter initializeWithConfiguration:config completion:^(NSError *error) {
+            NSError *err __unused = error;
+        }];
+    }
 }
 
 /// Validates the ConsentDialogType public APIs.
@@ -210,9 +220,12 @@
     NSString *moduleID __unused = module.moduleID;
     NSString *moduleVersion __unused = module.moduleVersion;
 
-    [module initializeWithCompletion:^(NSError *error) {
-        NSError *err __unused = error;
-    }];
+    CBCModuleInitializationConfiguration *config;
+    if (config) {
+        [module initializeWithConfiguration:config completion:^(NSError *error) {
+            NSError *err __unused = error;
+        }];
+    }
 }
 
 /// Validates the InitializableModuleObserver public APIs.
@@ -222,6 +235,41 @@
     if (result) {
         [observer onModuleInitializationCompleted:result];
     }
+}
+
+/// Validates the LogEntry public APIs.
+- (void)testLogEntry {
+    CBCLogEntry *logEntry = nil;
+    NSString *message __unused = logEntry.message;
+    NSString *subsystem __unused = logEntry.subsystem;
+    NSString *category __unused = logEntry.category;
+    NSDate *date __unused = logEntry.date;
+    CBCLogLevel logLevel __unused = logEntry.logLevel;
+}
+
+/// Validates the LogLevel public APIs.
+- (void)testLogLevel {
+    CBCLogLevel trace __unused = CBCLogLevelTrace;
+    CBCLogLevel debug __unused = CBCLogLevelDebug;
+    CBCLogLevel info __unused = CBCLogLevelInfo;
+    CBCLogLevel warning __unused = CBCLogLevelWarning;
+    CBCLogLevel error __unused = CBCLogLevelError;
+    CBCLogLevel none __unused = CBCLogLevelNone;
+}
+
+/// Validates the LogHandler public APIs.
+- (void)testLogHandler {
+    id<CBCLogHandler> logHandler = nil;
+    CBCLogEntry *logEntry = nil;
+    if (logHandler) {
+        [logHandler handle:logEntry];
+    }
+}
+
+/// Validates the ModuleInitializationConfiguration public APIs.
+- (void)testModuleInitializationConfiguration {
+    CBCModuleInitializationConfiguration *config = nil;
+    NSString *chartboostAppID __unused = config.chartboostAppID;
 }
 
 /// Validates the ModuleInitializationResult public APIs.
@@ -255,6 +303,27 @@
     [publisherMetadata setPublisherAppID:@""];
     [publisherMetadata setPlayerID:@""];
     [publisherMetadata setPublisherSessionID:@""];
+    id<CBCPublisherMetadataObserver> observer = nil;
+    if (observer) {
+        [publisherMetadata addObserver:observer];
+        [publisherMetadata removeObserver:observer];
+    }
+}
+
+/// Validates the PublisherMetadataObserver public APIs.
+- (void)testPublisherMetadataObserver {
+    id<CBCPublisherMetadataObserver> observer = nil;
+    [observer onChange:CBCPublisherMetadataPropertyPlayerID];
+}
+
+/// Validates the PublisherMetadata.Property public APIs.
+- (void)testPublisherMetadataProperty {
+    CBCPublisherMetadataProperty property = CBCPublisherMetadataPropertyFrameworkName;
+    property = CBCPublisherMetadataPropertyFrameworkVersion;
+    property = CBCPublisherMetadataPropertyIsUserUnderage;
+    property = CBCPublisherMetadataPropertyPlayerID;
+    property = CBCPublisherMetadataPropertyPublisherAppID;
+    property = CBCPublisherMetadataPropertyPublisherSessionID;
 }
 
 /// Validates the SDKConfiguration public APIs.
@@ -304,7 +373,8 @@
     return [super init];
 }
 
-- (void)initializeWithCompletion:(void (^ _Nonnull)(NSError * _Nullable))completion {
+- (void)initializeWithConfiguration:(CBCModuleInitializationConfiguration * _Nonnull)configuration 
+                         completion:(void (^ _Nonnull)(NSError * _Nullable))completion {
 
 }
 
@@ -353,6 +423,18 @@
 }
 
 - (void)removeObserver:(id<CBCConsentObserver>)observer {
+
+}
+
+// MARK: CBCPublisherMetadataObserver
+
+- (void)onChange:(enum CBCPublisherMetadataProperty)property {
+
+}
+
+// MARK: CBCLogHandler
+
+- (void)handle:(CBCLogEntry *)entry {
 
 }
 

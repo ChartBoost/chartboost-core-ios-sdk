@@ -20,7 +20,7 @@ class ChartboostCoreModuleInitializerTests: ChartboostCoreTestCase {
         let expectation = self.expectation(description: "wait for module initialization")
         let startDate = Date()
 
-        repository.initialize { result in
+        repository.initialize(configuration: .init(sdkConfiguration: .init(chartboostAppID: "some app ID"))) { result in
             // Check that the result is successful
             self.assertResultHasExpectedInfo(result, error: nil, startDate: startDate)
             expectation.fulfill()
@@ -49,7 +49,7 @@ class ChartboostCoreModuleInitializerTests: ChartboostCoreTestCase {
         let startDate = Date()
         let expectedError = NSError(domain: "module error", code: 8472)
 
-        repository.initialize { result in
+        repository.initialize(configuration: .init(sdkConfiguration: .init(chartboostAppID: "some app ID"))) { result in
             // Check that the result is a failure
             self.assertResultHasExpectedInfo(result, error: expectedError, startDate: startDate)
             expectation.fulfill()
@@ -97,7 +97,7 @@ class ChartboostCoreModuleInitializerTests: ChartboostCoreTestCase {
         let expectation = self.expectation(description: "wait for module initialization")
         let startDate = Date()
 
-        repository.initialize { result in
+        repository.initialize(configuration: .init(sdkConfiguration: .init(chartboostAppID: "some app ID"))) { result in
             // Check that the result is a failure
             self.assertResultHasExpectedInfo(result, error: nil, startDate: startDate)
             expectation.fulfill()

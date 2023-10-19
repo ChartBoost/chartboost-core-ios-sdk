@@ -15,6 +15,10 @@ class ChartboostCoreUserAgentProviderTests: ChartboostCoreTestCase {
         let expectation = expectation(description: "wait for fetch user agent")
 
         provider.userAgent { userAgent in
+            guard let userAgent else {
+                XCTFail("`userAgent is nil")
+                return
+            }
             XCTAssert(!userAgent.isEmpty)
             expectation.fulfill()
         }
@@ -31,9 +35,19 @@ class ChartboostCoreUserAgentProviderTests: ChartboostCoreTestCase {
 
         // nested calls
         provider.userAgent { [self] userAgent in
+            guard let userAgent else {
+                XCTFail("`userAgent is nil")
+                return
+            }
+
             XCTAssert(!userAgent.isEmpty)
 
             provider.userAgent { userAgent in
+                guard let userAgent else {
+                    XCTFail("`userAgent is nil")
+                    return
+                }
+
                 XCTAssert(!userAgent.isEmpty)
                 expectation1.fulfill()
             }
@@ -41,9 +55,19 @@ class ChartboostCoreUserAgentProviderTests: ChartboostCoreTestCase {
 
         // nested calls again
         provider.userAgent { [self] userAgent in
+            guard let userAgent else {
+                XCTFail("`userAgent is nil")
+                return
+            }
+
             XCTAssert(!userAgent.isEmpty)
 
             provider.userAgent { userAgent in
+                guard let userAgent else {
+                    XCTFail("`userAgent is nil")
+                    return
+                }
+
                 XCTAssert(!userAgent.isEmpty)
                 expectation2.fulfill()
             }
@@ -52,9 +76,19 @@ class ChartboostCoreUserAgentProviderTests: ChartboostCoreTestCase {
         // nested calls again in main thread
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [self] in
             provider.userAgent { [self] userAgent in
+                guard let userAgent else {
+                    XCTFail("`userAgent is nil")
+                    return
+                }
+
                 XCTAssert(!userAgent.isEmpty)
 
                 provider.userAgent { userAgent in
+                    guard let userAgent else {
+                        XCTFail("`userAgent is nil")
+                        return
+                    }
+
                     XCTAssert(!userAgent.isEmpty)
                     expectation3.fulfill()
                 }
@@ -64,9 +98,19 @@ class ChartboostCoreUserAgentProviderTests: ChartboostCoreTestCase {
         // nested calls again in background thread
         DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2) { [self] in
             provider.userAgent { [self] userAgent in
+                guard let userAgent else {
+                    XCTFail("`userAgent is nil")
+                    return
+                }
+
                 XCTAssert(!userAgent.isEmpty)
 
                 provider.userAgent { userAgent in
+                    guard let userAgent else {
+                        XCTFail("`userAgent is nil")
+                        return
+                    }
+
                     XCTAssert(!userAgent.isEmpty)
                     expectation4.fulfill()
                 }

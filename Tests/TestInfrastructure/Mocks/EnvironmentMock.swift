@@ -58,7 +58,7 @@ final class EnvironmentMock: AdvertisingEnvironment, AnalyticsEnvironment, Attri
 
     var volume: Double = 0.87
 
-    func userAgent(completion: @escaping (String) -> Void) {
+    func userAgent(completion: @escaping (String?) -> Void) {
         completion("some user agent")
     }
 }
