@@ -1,17 +1,18 @@
 Pod::Spec.new do |spec|
   spec.name        = 'ChartboostCoreSDK'
-  spec.version     = '0.3.0'
+  spec.version     = '0.4.0'
   spec.license     = { :type => 'MIT', :file => 'LICENSE.md' }
   spec.homepage    = 'https://github.com/ChartBoost/chartboost-core-ios-sdk'
   spec.authors     = { 'Chartboost' => 'https://www.chartboost.com/' }
   spec.summary     = 'Chartboost Core iOS SDK.'
   spec.description = 'SDK that provides core functionalities to publishers and other modules.'
-  spec.documentation_url = 'https://chartboost.github.io/chartboost-core-ios-sdk/docs/0.2.0'
+  spec.documentation_url = 'https://reference.chartboost.com/core/ios/0.4.0'
 
   # Source
   spec.module_name  = 'ChartboostCoreSDK'
   spec.source       = { :git => 'https://github.com/ChartBoost/chartboost-core-ios-sdk.git', :tag => spec.version }
   spec.source_files = 'Source/**/*.{swift}'
+  spec.resource_bundles = { 'ChartboostCoreSDK' => ['PrivacyInfo.xcprivacy'] }
   spec.static_framework = true
 
   # Minimum supported versions

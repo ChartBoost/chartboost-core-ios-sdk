@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -105,6 +105,7 @@ class PublicAPIStabilityTests: XCTestCase {
         if let adapter {
             let _: Bool = adapter.shouldCollectConsent
             let _: ConsentStatus = adapter.consentStatus
+            let _: [String: ConsentStatus] = adapter.partnerConsentStatus
             let _: [ConsentStandard: ConsentValue] = adapter.consents
 
             let _: ConsentAdapterDelegate? = adapter.delegate
@@ -165,6 +166,8 @@ class PublicAPIStabilityTests: XCTestCase {
         if let cmp {
             let _: Bool = cmp.shouldCollectConsent
             let _: ConsentStatus = cmp.consentStatus
+            let _: [String: NSNumber] = cmp.objc_partnerConsentStatus
+            let _: [String: ConsentStatus] = cmp.partnerConsentStatus
             let _: [ConsentStandard: ConsentValue] = cmp.consents
 
             cmp.grantConsent(source: .developer)
@@ -204,6 +207,7 @@ class PublicAPIStabilityTests: XCTestCase {
         observer?.onConsentModuleReady()
         observer?.onConsentChange(standard: .ccpaOptIn, value: "some value")
         observer?.onConsentChange(standard: "custom standard", value: ConsentValue.denied)
+        observer?.onPartnerConsentStatusChange(partnerID: "some partner ID", status: .granted)
         observer?.onConsentStatusChange(.denied)
     }
 
@@ -391,13 +395,17 @@ class PublicAPIStabilityTests: XCTestCase {
     }
 }
 
-extension PublicAPIStabilityTests: ConsentObserver {
+extension PublicAPIStabilityTests: ConsentObserver, ConsentAdapterDelegate {
 
     func onConsentModuleReady() {
         
     }
 
     func onConsentStatusChange(_ status: ConsentStatus) {
+
+    }
+
+    func onPartnerConsentStatusChange(partnerID: String, status: ConsentStatus) {
 
     }
 
@@ -458,6 +466,10 @@ class PublicAPIStabilityTestsConsentAdapter: ConsentAdapter {
         .denied
     }
 
+    var partnerConsentStatus: [String : ConsentStatus] {
+        [:]
+    }
+
     var consents: [ConsentStandard : ConsentValue] {
         [.ccpaOptIn: .denied]
     }
@@ -487,6 +499,10 @@ extension PublicAPIStabilityTests: ConsentManagementPlatform {
 
     var consentStatus: ConsentStatus {
         .denied
+    }
+
+    var objc_partnerConsentStatus: [String : NSNumber] {
+        [:]
     }
 
     var consents: [ConsentStandard : ConsentValue] {

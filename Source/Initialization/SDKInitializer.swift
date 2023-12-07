@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -253,9 +253,12 @@ final class ChartboostCoreSDKInitializer: SDKInitializer {
                             logger.error("Failed to initialize module \(module.moduleID) with error: \(error)")
                         } else {
                             logger.info("Initialized module \(module.moduleID)")
-                            // Keep module alive and start sending consent updates to it
+                            // Keep module alive and start sending observer updates to it
                             if let module = module as? ConsentObserver {
                                 self.consentManager.addObserver(module)
+                            }
+                            if let module = module as? PublisherMetadataObserver {
+                                ChartboostCore.publisherMetadata.addObserver(module)    // we shouldn't access ChartboostCore directly here, but this will go away in the next version when PublisherMetadataObserver gets fased out
                             }
                             self.initializedModules.append(module)
 

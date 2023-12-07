@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -23,6 +23,15 @@ public protocol ConsentManagementPlatform: AnyObject {
     /// The current consent status determined by the CMP.
     /// Returns ``ConsentStatus/unknown`` if no consent adapter module is available.
     var consentStatus: ConsentStatus { get }
+
+    /// Individualized consent status per partner SDK, as determined by the CMP.
+    /// The keys for advertising SDKs should match Chartboost Mediation partner adapter ids.
+    ///
+    /// For compatibility with Obj-C, the values are the Int representation of a ``ConsentStatus``.
+    /// You may use the more idiomatic ``partnerConsentStatus`` in Swift instead.
+    ///
+    /// Returns an empty dictionary if no consent adapter module is available.
+    var objc_partnerConsentStatus: [String: NSNumber] { get }
 
     /// Detailed consent status for each consent standard, as determined by the CMP.
     /// Returns an empty dictionary if no consent adapter module is available.
@@ -79,6 +88,19 @@ public protocol ConsentManagementPlatform: AnyObject {
 
     /// Removes a previously-added observer.
     func removeObserver(_ observer: ConsentObserver)
+}
+
+extension ConsentManagementPlatform {
+
+    /// Individualized consent status per partner SDK, as determined by the CMP.
+    /// The keys for advertising SDKs should match Chartboost Mediation partner adapter ids.
+    ///
+    /// Returns an empty dictionary if no consent adapter module is available.
+    public var partnerConsentStatus: [String: ConsentStatus] {
+        objc_partnerConsentStatus.compactMapValues {
+            ConsentStatus(rawValue: $0.intValue)
+        }
+    }
 }
 
 // Convenience methods with default arguments.
@@ -174,6 +196,10 @@ final class ChartboostCoreConsentManagementPlatform: ConsentManagementPlatform, 
         adapter?.consentStatus ?? .unknown
     }
 
+    var objc_partnerConsentStatus: [String : NSNumber] {
+        adapter?.partnerConsentStatus.mapValues { NSNumber(integerLiteral: $0.rawValue) } ?? [:]
+    }
+
     var consents: [ConsentStandard: ConsentValue] {
         adapter?.consents ?? [:]
     }
@@ -244,6 +270,15 @@ extension ChartboostCoreConsentManagementPlatform {
         // Forward call to external observers (modules and publisher observers)
         forAllObservers {
             $0.onConsentStatusChange(status)
+        }
+    }
+
+    func onPartnerConsentStatusChange(partnerID: String, status: ConsentStatus) {
+        logger.debug("Consent status for partner '\(partnerID)' changed to \(status)")
+
+        // Forward call to external observers (modules and publisher observers)
+        forAllObservers {
+            $0.onPartnerConsentStatusChange(partnerID: partnerID, status: status)
         }
     }
 

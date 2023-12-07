@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -22,6 +22,7 @@ class ConsentAdapterMock: InitializableModuleMock, ConsentAdapter {
     var showConsentDialogViewControllerLastValue: UIViewController?
     var showConsentDialogLastCompletion: ((Bool) -> Void)?
     var consentStatusValue: ConsentStatus = .granted
+    var partnerConsentStatusValue: [String : ConsentStatus] = [:]
 
     // MARK: - ConsentAdapter
 
@@ -31,6 +32,10 @@ class ConsentAdapterMock: InitializableModuleMock, ConsentAdapter {
 
     var consentStatus: ConsentStatus {
         consentStatusValue
+    }
+
+    var partnerConsentStatus: [String : ConsentStatus] {
+        partnerConsentStatusValue
     }
 
     var consents: [ConsentStandard: ConsentValue] = [:]

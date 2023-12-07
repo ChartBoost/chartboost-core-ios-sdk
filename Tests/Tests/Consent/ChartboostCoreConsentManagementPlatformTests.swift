@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -14,6 +14,8 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
     func testDefaultValuesWhenNoAdapterIsSet() {
         XCTAssertEqual(cmp.shouldCollectConsent, false)
         XCTAssertEqual(cmp.consentStatus, .unknown)
+        XCTAssertEqual(cmp.partnerConsentStatus, [:])
+        XCTAssertEqual(cmp.objc_partnerConsentStatus, [:])
         XCTAssertEqual(cmp.consents, [:])
         var completionCalls = 0
         cmp.grantConsent(source: .user) { result in
@@ -60,6 +62,32 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
 
         adapter.consentStatusValue = .unknown
         XCTAssertEqual(cmp.consentStatus, .unknown)
+    }
+
+    /// Validates that calls to `partnerConsentStatus` return the adapter value.
+    func testPartnerConsentStatus() {
+        let adapter = ConsentAdapterMock()
+        cmp.adapter = adapter
+
+        adapter.partnerConsentStatusValue = [:]
+        XCTAssertEqual(cmp.partnerConsentStatus, [:])
+        XCTAssertEqual(cmp.objc_partnerConsentStatus, [:])
+
+        adapter.partnerConsentStatusValue = ["partner 1": .granted, "partner 2": .denied]
+        XCTAssertEqual(cmp.partnerConsentStatus, ["partner 1": .granted, "partner 2": .denied])
+        XCTAssertEqual(
+            cmp.objc_partnerConsentStatus,
+            ["partner 1": NSNumber(integerLiteral: ConsentStatus.granted.rawValue),
+             "partner 2": NSNumber(integerLiteral: ConsentStatus.denied.rawValue)]
+        )
+        adapter.partnerConsentStatusValue = ["partner 1": .denied, "partner 2": .denied, "partner 3": .unknown]
+        XCTAssertEqual(cmp.partnerConsentStatus, ["partner 1": .denied, "partner 2": .denied, "partner 3": .unknown])
+        XCTAssertEqual(
+            cmp.objc_partnerConsentStatus,
+            ["partner 1": NSNumber(integerLiteral: ConsentStatus.denied.rawValue),
+             "partner 2": NSNumber(integerLiteral: ConsentStatus.denied.rawValue),
+             "partner 3": NSNumber(integerLiteral: ConsentStatus.unknown.rawValue)]
+        )
     }
 
     /// Validates that calls to `consents` return the adapter value.
@@ -178,14 +206,22 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         XCTAssertEqual(observer2.onConsentStatusChangeLastValue, .granted)
 
         cmp.onConsentChange(standard: .ccpaOptIn, value: .denied)
+        cmp.onPartnerConsentStatusChange(partnerID: "partner 1", status: .granted)
+        cmp.onPartnerConsentStatusChange(partnerID: "partner 2", status: .denied)
         waitForTasksDispatchedOnMainQueue()
 
         XCTAssertEqual(observer1.onConsentChangeCallCount, 2)
         XCTAssertEqual(observer1.onConsentChangeConsentStandardLastValue, .ccpaOptIn)
         XCTAssertEqual(observer1.onConsentChangeConsentValueLastValue, .denied)
+        XCTAssertEqual(observer1.onPartnerConsentStatusChangeCallCount, 2)
+        XCTAssertEqual(observer1.onPartnerConsentStatusChangeLastValue?.partnerID, "partner 2")
+        XCTAssertEqual(observer1.onPartnerConsentStatusChangeLastValue?.status, .denied)
         XCTAssertEqual(observer2.onConsentChangeCallCount, 1)
         XCTAssertEqual(observer2.onConsentChangeConsentStandardLastValue, .ccpaOptIn)
         XCTAssertEqual(observer2.onConsentChangeConsentValueLastValue, .denied)
+        XCTAssertEqual(observer2.onPartnerConsentStatusChangeCallCount, 2)
+        XCTAssertEqual(observer2.onPartnerConsentStatusChangeLastValue?.partnerID, "partner 2")
+        XCTAssertEqual(observer2.onPartnerConsentStatusChangeLastValue?.status, .denied)
     }
 
     /// Validates that observers can be removed and consent updates are no longer forwarded to them.

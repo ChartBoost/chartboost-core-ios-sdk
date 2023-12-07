@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -158,6 +158,16 @@ NSString * ConsentDialogTypeAsString(CBCConsentDialogType consentDialogType) {
                     initWithText:@"[ObjC] onConsentStatusChange"
                     secondaryText:[NSString stringWithFormat:
                                    @"ConsentStatus = %@",
+                                   ConsentStatusAsString(status)]];
+    [[NSNotificationCenter defaultCenter] postNotificationName:NSNotification.NewLog object:log];
+}
+
+- (void)onPartnerConsentStatusChangeWithPartnerID:(NSString *)partnerID status:(enum CBCConsentStatus)status {
+    LogItem *log = [[LogItem alloc]
+                    initWithText:@"[ObjC] onPartnerConsentStatusChange"
+                    secondaryText:[NSString stringWithFormat:
+                                   @"PartnerID = %@, ConsentStatus = %@",
+                                   partnerID,
                                    ConsentStatusAsString(status)]];
     [[NSNotificationCenter defaultCenter] postNotificationName:NSNotification.NewLog object:log];
 }

@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -11,7 +11,6 @@ import UIKit
 /// When the publisher uses Core's CMP APIs (the ``ChartboostCore/consent``) method calls are forwarded to a Core module
 /// that conforms to ``ConsentAdapter``, and such a module is also expected to report consent status changes back to the
 /// Core SDK via its ``delegate`` property.
-@objc(CBCConsentAdapter)
 public protocol ConsentAdapter: InitializableModule {
 
     /// Indicates whether the CMP has determined that consent should be collected from the user.
@@ -19,6 +18,11 @@ public protocol ConsentAdapter: InitializableModule {
 
     /// The current consent status determined by the CMP.
     var consentStatus: ConsentStatus { get }
+
+    /// Individualized consent status per partner SDK.
+    ///
+    /// The keys for advertising SDKs should match Chartboost Mediation partner adapter ids.
+    var partnerConsentStatus: [String: ConsentStatus] { get }
 
     /// Detailed consent status for each consent standard, as determined by the CMP.
     ///

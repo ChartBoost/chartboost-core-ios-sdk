@@ -1,6 +1,6 @@
 platform :ios, '11.0'
 
 target 'CoreDemo' do
-  pod 'ChartboostCoreSDK', '0.3.0'
+  pod 'ChartboostCoreSDK', '0.4.0'
   pod 'ChartboostCoreConsentAdapterUsercentrics'
 end

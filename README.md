@@ -14,7 +14,7 @@ Chartboost Core main functionalities are:
 
 ## Documentation
 
-You can find the reference documentation for the latest SDK version [here](https://chartboost.github.io/chartboost-core-ios-sdk/).
+You can find the reference documentation for the latest SDK version [here](https://reference.chartboost.com/core/ios/).
 
 A `ChartboostCoreSDK.doccarchive` documentation file is also available in this repo and can be viewed on Xcode.
 
