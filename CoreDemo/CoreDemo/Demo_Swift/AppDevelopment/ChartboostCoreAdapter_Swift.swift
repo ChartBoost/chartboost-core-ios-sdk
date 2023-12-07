@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -117,6 +117,14 @@ extension ChartboostCoreAdapter_Swift: ConsentObserver {
         let logItem = LogItem(
             text: "[Swift] onConsentStatusChange",
             secondaryText: "ConsentStatus = \(status)"
+        )
+        NotificationCenter.default.post(name: .newLog, object: logItem)
+    }
+
+    func onPartnerConsentStatusChange(partnerID: String, status: ConsentStatus) {
+        let logItem = LogItem(
+            text: "[Swift] onPartnerConsentStatusChange",
+            secondaryText: "PartnerID = \(partnerID), ConsentStatus = \(status)"
         )
         NotificationCenter.default.post(name: .newLog, object: logItem)
     }

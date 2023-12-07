@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -23,6 +23,7 @@ class ConsentManagementPlatformMock: ConsentManagementPlatform & ConsentAdapterP
     var showConsentDialogLastCompletion: ((Bool) -> Void)?
     var observers: [ConsentObserver] = []
     var consentStatusValue: ConsentStatus = .granted
+    var partnerConsentStatusValue: [String: NSNumber] = [:]
 
     // MARK: - ConsentManagementPlatform
 
@@ -30,6 +31,10 @@ class ConsentManagementPlatformMock: ConsentManagementPlatform & ConsentAdapterP
 
     var consentStatus: ConsentStatus {
         consentStatusValue
+    }
+
+    var objc_partnerConsentStatus: [String : NSNumber] {
+        partnerConsentStatusValue
     }
 
     var consents: [ConsentStandard: ConsentValue] = [:]

@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Chartboost, Inc.
+// Copyright 2023-2023 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -10,7 +10,6 @@
 /// Tests to validate that the Core SDK Objective-C public API remains stable and is not modified by mistake breaking existing integrations.
 @interface PublicAPIStabilityObjCTests : XCTestCase
 <
-    CBCConsentAdapter,
     CBCConsentManagementPlatform,
     CBCConsentObserver,
     CBCInitializableModule,
@@ -110,36 +109,6 @@
     NSError *error __unused = result.error;
 }
 
-/// Validates the ConsentAdapter public APIs.
-- (void)testConsentAdapter {
-    id<CBCConsentAdapter> adapter = nil;
-    BOOL shouldCollectConsent __unused = adapter.shouldCollectConsent;
-    CBCConsentStatus consentStatus __unused = adapter.consentStatus;
-    NSDictionary<CBCConsentStandard *, CBCConsentValue *> *consents __unused = adapter.consents;
-
-    id<CBCConsentAdapterDelegate> delegate __unused = adapter.delegate;
-    adapter.delegate = delegate;
-    adapter.delegate = nil;
-
-
-    [adapter grantConsentWithSource:CBCConsentStatusSourceUser completion:^(BOOL result){}];
-    [adapter denyConsentWithSource:CBCConsentStatusSourceDeveloper completion:^(BOOL result){}];
-    [adapter resetConsentWithCompletion:^(BOOL result){}];
-
-    [adapter showConsentDialog:CBCConsentDialogTypeConcise from:[[UIViewController alloc] init] completion:^(BOOL result){}];
-    [adapter showConsentDialog:CBCConsentDialogTypeDetailed from:[[UIViewController alloc] init] completion:^(BOOL result){}];
-
-    NSString *moduleName __unused = adapter.moduleID;
-    NSString *moduleVersion __unused = adapter.moduleVersion;
-
-    CBCModuleInitializationConfiguration *config;
-    if (config) {
-        [adapter initializeWithConfiguration:config completion:^(NSError *error) {
-            NSError *err __unused = error;
-        }];
-    }
-}
-
 /// Validates the ConsentDialogType public APIs.
 - (void)testConsentDialogType {
     CBCConsentDialogType concise __unused = CBCConsentDialogTypeConcise;
@@ -151,6 +120,7 @@
     id<CBCConsentManagementPlatform> cmp = nil;
     BOOL shouldCollectConsent __unused = cmp.shouldCollectConsent;
     CBCConsentStatus consentStatus __unused = cmp.consentStatus;
+    NSDictionary<NSString *, NSNumber *> *partnerConsentStatus __unused = cmp.objc_partnerConsentStatus;
     NSDictionary<CBCConsentStandard *, CBCConsentValue *> *consents __unused = cmp.consents;
 
     [cmp grantConsentWithSource:CBCConsentStatusSourceUser completion:^(BOOL result){}];
@@ -168,6 +138,7 @@
 - (void)testConsentObserver {
     id<CBCConsentObserver> observer;
     [observer onConsentModuleReady];
+    [observer onPartnerConsentStatusChangeWithPartnerID:@"some partner ID" status:CBCConsentStatusGranted];
     [observer onConsentChangeWithStandard:CBCConsentStandard.ccpaOptIn value:[[CBCConsentValue alloc] initWithStringLiteral:@"some value"]];
     [observer onConsentChangeWithStandard:[[CBCConsentStandard alloc] initWithStringLiteral:@"custom standard"] value:CBCConsentValue.denied];
     [observer onConsentStatusChange:CBCConsentStatusDenied];
@@ -349,6 +320,10 @@
 
 }
 
+- (void)onPartnerConsentStatusChangeWithPartnerID:(NSString *)partnerID status:(enum CBCConsentStatus)status {
+
+}
+
 - (void)onConsentChangeWithStandard:(CBCConsentStandard *)standard value:(CBCConsentValue *)value {
 
 }
@@ -378,16 +353,6 @@
 
 }
 
-// MARK: CBCConsentAdapter
-
-- (void)setDelegate:(id<CBCConsentAdapterDelegate>)delegate {
-
-}
-
-- (id<CBCConsentAdapterDelegate>)delegate {
-    return nil;
-}
-
 // MARK: CBCConsentManagementPlatform
 
 - (BOOL)shouldCollectConsent {
@@ -396,6 +361,10 @@
 
 - (CBCConsentStatus)consentStatus {
     return CBCConsentStatusDenied;
+}
+
+- (NSDictionary<NSString *, NSNumber *> *)objc_partnerConsentStatus {
+    return @{};
 }
 
 -(NSDictionary<CBCConsentStandard *, CBCConsentValue *> *)consents {
