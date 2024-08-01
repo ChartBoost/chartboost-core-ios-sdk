@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -6,10 +6,10 @@
 import Foundation
 
 /// A Codable representation for a JSON object.
-/// Useful as part of another Codable object, where a generic `[String: Any]` property cannot be used since such a type cannot conform to Codable.
+/// Useful as part of another Codable object, where a generic `[String: Any]` property cannot be used
+/// since such a type cannot conform to Codable.
 /// - parameter T: The primitive value type expected to match the JSON structure.
 struct JSON<T>: Codable, Equatable {
-
     /// The native primitive value represented by this JSON model.
     let value: T
 

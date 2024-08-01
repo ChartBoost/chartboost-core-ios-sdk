@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,7 +7,6 @@ import Foundation
 
 /// A repository that provides access to and persists Codable values.
 protocol JSONRepository {
-
     /// Returns the latest value for a given name.
     /// - parameter type: The type to decode.
     /// - parameter name: The string that identifies the value.
@@ -35,7 +34,6 @@ protocol JSONRepository {
 
 /// Core's concrete implementation of ``JSONRepository``.
 struct ChartboostCoreJSONRepository: JSONRepository {
-
     @Injected(\.fileStorage) private  var fileStorage
 
     let directoryLocation: FileManager.SearchPathDirectory

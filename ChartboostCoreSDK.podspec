@@ -1,12 +1,12 @@
 Pod::Spec.new do |spec|
   spec.name        = 'ChartboostCoreSDK'
-  spec.version     = '0.4.0'
+  spec.version     = '1.0.0'
   spec.license     = { :type => 'MIT', :file => 'LICENSE.md' }
   spec.homepage    = 'https://github.com/ChartBoost/chartboost-core-ios-sdk'
   spec.authors     = { 'Chartboost' => 'https://www.chartboost.com/' }
   spec.summary     = 'Chartboost Core iOS SDK.'
   spec.description = 'SDK that provides core functionalities to publishers and other modules.'
-  spec.documentation_url = 'https://reference.chartboost.com/core/ios/0.4.0'
+  spec.documentation_url = 'https://reference.chartboost.com/core/ios/1.0.0'
 
   # Source
   spec.module_name  = 'ChartboostCoreSDK'
@@ -17,7 +17,7 @@ Pod::Spec.new do |spec|
 
   # Minimum supported versions
   spec.swift_version         = '5.0'
-  spec.ios.deployment_target = '11.0'
+  spec.ios.deployment_target = '13.0'
 
   # System frameworks used
   spec.ios.frameworks = ['AdSupport', 'AppTrackingTransparency', 'AVFoundation', 'CoreTelephony', 'Foundation', 'SystemConfiguration', 'UIKit', 'WebKit']

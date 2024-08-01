@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -8,7 +8,6 @@ import Foundation
 /// Network connection type.
 @objc(CBCNetworkConnectionType)
 public enum NetworkConnectionType: Int {
-
     /// Unknown connection type.
     case unknown
 
@@ -32,9 +31,10 @@ public enum NetworkConnectionType: Int {
 
     /// 5G cellular network connection.
     case cellular5G
+}
 
-    /// String representation of the type.
-    var description: String {
+extension NetworkConnectionType: CustomStringConvertible {
+    public var description: String {
         switch self {
         case .unknown: return "unknown"
         case .wired: return "wired"

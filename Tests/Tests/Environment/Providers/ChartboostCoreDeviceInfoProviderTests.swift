@@ -1,13 +1,12 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class ChartboostCoreDeviceInfoProviderTests: ChartboostCoreTestCase {
-
     let provider = ChartboostCoreDeviceInfoProvider()
 
     /// Validates that all the provider properties can be accessed without crashing or warnings.
@@ -18,9 +17,9 @@ class ChartboostCoreDeviceInfoProviderTests: ChartboostCoreTestCase {
         _ = provider.model
         _ = provider.osName
         _ = provider.osVersion
-        _ = provider.screenHeight
+        _ = provider.screenHeightPixels
         _ = provider.screenScale
-        _ = provider.screenWidth
+        _ = provider.screenWidthPixels
         _ = provider.volume
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,7 +7,6 @@ import Foundation
 
 /// A repository that holds an app config and can fetch a new one from the backend.
 protocol AppConfigRepository {
-
     /// The current app config.
     /// This may be a default hardcoded value if no backend config is available.
     var config: AppConfig { get }
@@ -15,23 +14,24 @@ protocol AppConfigRepository {
     /// Fetches a new app config from the backend, updating the value for ``config``.
     /// - parameter configuration: The SDK configuration object passed by the publisher on initialization.
     /// - parameter completion: A completion handler executed when the fetch operation is done.
-    func fetchAppConfig(with configuration: SDKConfiguration, completion: @escaping (Error?) -> Void)
+    func fetchAppConfig(configuration: SDKConfiguration, completion: @escaping (Error?) -> Void)
 }
 
 // Extension with a definition of the default app config.
 // This is private to force other components to fetch the current config from the ``AppConfigRepository``.
-private extension AppConfig {
-
+extension AppConfig {
     /// A default app config with hardcoded values.
-    static var `default`: AppConfig {
+    fileprivate static var `default`: AppConfig {
         AppConfig(
+            chartboostAppID: nil,
+            consentUpdateBatchDelay: 0.5,
             coreInitializationDelayBase: 1,
             coreInitializationDelayMax: 30,
             coreInitializationRetryCountMax: 3,
+            logLevelOverride: nil,
             moduleInitializationDelayBase: 1,
             moduleInitializationDelayMax: 30,
             moduleInitializationRetryCountMax: 3,
-            isChildDirected: nil,
             modules: []
         )
     }
@@ -39,7 +39,6 @@ private extension AppConfig {
 
 /// Core's concrete implementation of ``AppConfigRepository``.
 final class ChartboostCoreAppConfigRepository: AppConfigRepository {
-
     enum FetchAppConfigError: String, Error, Equatable {
         case receivedNilResponseBody = "Received no init response body from backend."
     }
@@ -60,46 +59,51 @@ final class ChartboostCoreAppConfigRepository: AppConfigRepository {
         backendConfig ?? .default
     }
 
-    func fetchAppConfig(with configuration: SDKConfiguration, completion: @escaping (Error?) -> Void) {
+    func fetchAppConfig(configuration: SDKConfiguration, completion: @escaping (Error?) -> Void) {
         queue.async { [self] in
             // Complete immediately if a backend config is already cached, or if one can be retrieved from disk
             if backendConfig != nil || updateAppConfigFromDisk() {
                 completion(nil)
                 // Fetch a new config on the background
-                updateAppConfigFromBackend(with: configuration, completion: nil)
+                updateAppConfigFromBackend(configuration: configuration, completion: nil)
             } else {
                 // First fetch the config from the backend, and then complete
-                updateAppConfigFromBackend(with: configuration, completion: completion)
+                updateAppConfigFromBackend(configuration: configuration, completion: completion)
             }
         }
     }
 
-    private func updateAppConfigFromBackend(with configuration: SDKConfiguration, completion: ((Error?) -> Void)?) {
+    private func updateAppConfigFromBackend(configuration: SDKConfiguration, completion: ((Error?) -> Void)?) {
         // Make request to backend
-        let request = appConfigRequestFactory.makeRequest(configuration: configuration, environment: environment)
-        networkManager.send(request) { [weak self] response in
-            guard let self else { return }
-            self.queue.async {
-                switch response.result {
-                case .success(let responseBody):
-                    // Success
-                    if let responseBody {
-                        // Parse the response, cache it, and persist it in disk for use in subsequent sessions.
-                        logger.info("Fetched new app config from backend")
-                        let appConfig = self.appConfigFactory.makeAppConfig(from: responseBody, fallbackValues: .default)
-                        self.backendConfig = appConfig
-                        self.persistAppConfig(appConfig)
-                        completion?(nil)
-                    } else {
-                        // Unexpected response: server succeeded but provided no config data
-                        let error = FetchAppConfigError.receivedNilResponseBody
+        appConfigRequestFactory.makeRequest(configuration: configuration, environment: environment) { [weak self] request in
+            self?.networkManager.send(request) { [weak self] response in
+                guard let self else { return }
+                self.queue.async {
+                    switch response.result {
+                    case .success(let responseBody):
+                        // Success
+                        if let responseBody {
+                            // Parse the response, cache it, and persist it in disk for use in subsequent sessions.
+                            logger.info("Fetched new app config from backend")
+                            let appConfig = self.appConfigFactory.makeAppConfig(
+                                from: responseBody,
+                                fallbackValues: .default,
+                                chartboostAppID: configuration.chartboostAppID
+                            )
+                            self.backendConfig = appConfig
+                            self.persistAppConfig(appConfig)
+                            completion?(nil)
+                        } else {
+                            // Unexpected response: server succeeded but provided no config data
+                            let error = FetchAppConfigError.receivedNilResponseBody
+                            logger.error("Failed to fetch app config from backend with error: \(error)")
+                            completion?(error)
+                        }
+                    case .failure(let error):
+                        // Failure
                         logger.error("Failed to fetch app config from backend with error: \(error)")
                         completion?(error)
                     }
-                case .failure(let error):
-                    // Failure
-                    logger.error("Failed to fetch app config from backend with error: \(error)")
-                    completion?(error)
                 }
             }
         }

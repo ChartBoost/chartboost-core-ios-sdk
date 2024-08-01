@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,21 +7,19 @@ import Foundation
 import os.log
 
 /// A `LogHandler` that logs to the console.
-final class ConsoleLogHandler: LogHandler {
-    
+@objc(CBCConsoleLogHandler)
+@objcMembers
+open class ConsoleLogHandler: NSObject, LogHandler {
     /// The desired log level.
-    @Atomic var logLevel: LogLevel = .info
+    open var logLevel: LogLevel = .info
 
     /// Handle a `LogEntry` if the log level is sufficient for the desired output log level.
     /// On iOS 12 and later, logging is performed using `os_log`, otherwise no logging of any kind occurs.
-    func handle(_ entry: LogEntry) {
-        guard #available(iOS 12, *) else {
+    open func handle(_ entry: LogEntry) {
+        guard logLevel >= entry.logLevel else {
             return
         }
-        guard logLevel <= entry.logLevel else {
-            return
-        }
-        guard let type = entry.logLevel.asOSLogType else {
+        guard let type = entry.logLevel.osLogType else {
             return
         }
         let log = OSLog(subsystem: entry.subsystem, category: entry.category)
@@ -29,13 +27,13 @@ final class ConsoleLogHandler: LogHandler {
     }
 }
 
-private extension LogLevel {
+extension LogLevel {
     /// Maps `LogLevel` to an appropriate `OSLogType`.
-    var asOSLogType: OSLogType? {
+    fileprivate var osLogType: OSLogType? {
         switch self {
-        case .none:
+        case .disabled:
             return nil
-        case .trace, .debug:
+        case .verbose, .debug:
             // Use this level to capture information that may be useful during development or while
             // troubleshooting a specific problem.
             return .debug

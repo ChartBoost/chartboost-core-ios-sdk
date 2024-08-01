@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -6,10 +6,14 @@
 @testable import ChartboostCoreSDK
 
 final class FileStorageMock: FileStorage {
-
     // MARK: - Call Counts and Return Values
 
-    var systemDirectoryURLReturnValue: Any? = try? FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+    var systemDirectoryURLReturnValue: Any? = try? FileManager.default.url(
+        for: .cachesDirectory,
+        in: .userDomainMask,
+        appropriateFor: nil,
+        create: false
+    )
 
     var fileExistsReturnValue = true
     var fileExistsURLLastValue: URL?
@@ -39,6 +43,7 @@ final class FileStorageMock: FileStorage {
 
     // MARK: - FileStorage
 
+    // swiftlint:disable force_cast
     func systemDirectoryURL(_ type: FileManager.SearchPathDirectory) throws -> URL {
         if let error = systemDirectoryURLReturnValue as? Error {
             throw error
@@ -46,6 +51,7 @@ final class FileStorageMock: FileStorage {
             return systemDirectoryURLReturnValue as! URL
         }
     }
+    // swiftlint:enable force_cast
 
     func fileExists(at url: URL) -> Bool {
         fileExistsURLLastValue = url
@@ -69,6 +75,7 @@ final class FileStorageMock: FileStorage {
         }
     }
 
+    // swiftlint:disable force_cast
     func readData(at url: URL) throws -> Data {
         readDataCallCount += 1
         readDataURLLastValue = url
@@ -78,6 +85,7 @@ final class FileStorageMock: FileStorage {
             return readDataReturnValue as! Data
         }
     }
+    // swiftlint:enable force_cast
 
     func directoryExists(at url: URL) -> Bool {
         directoryExistsReturnValue

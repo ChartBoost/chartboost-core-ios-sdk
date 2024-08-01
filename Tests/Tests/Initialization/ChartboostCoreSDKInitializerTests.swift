@@ -1,24 +1,27 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
-
     let initializer = ChartboostCoreSDKInitializer()
 
-    let configuration = SDKConfiguration(chartboostAppID: "")
+    lazy var configuration = SDKConfiguration(
+        chartboostAppID: "",
+        modules: attemptedModules,
+        skippedModuleIDs: []
+    )
     let attemptedModules = [
-        InitializableModuleMock(id: "module1"),
-        InitializableModuleMock(id: "module2"),
-        ConsentAdapterMock(id: "module3_cmp"),
-        ConsentAdapterMock(id: "module4_cmp_dropped") // only the first `ConsentAdapter` is initialized
+        ModuleMock(moduleID: "module1"),
+        ModuleMock(moduleID: "module2"),
+        ConsentAdapterMock(moduleID: "module3_cmp"),
+        ConsentAdapterMock(moduleID: "module4_cmp_dropped"), // only the first `ConsentAdapter` is initialized
     ]
     lazy var expectedModules = attemptedModules.dropLast() // drop the last `ConsentAdapter` which won't be initilized
-    let modulesObserver = InitializableModuleObserverMock()
+    let modulesObserver = ModuleObserverMock()
 
     /// Validates that a call to `initializeSDK()` makes the session start and the user agent to be fetched.
     func testInitializeTriggersSessionStartAndUserAgentFetchIfNeeded() {
@@ -27,7 +30,7 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
         mocks.userAgentProvider.privateCachedUserAgent = nil
 
         // Initialize
-        initializer.initializeSDK(with: configuration, modules: attemptedModules, moduleObserver: modulesObserver)
+        initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check that session is started and user agent is fetched
@@ -36,14 +39,15 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
         XCTAssertEqual(mocks.userAgentProvider.privateCachedUserAgent, "some user agent")
     }
 
-    /// Validates that a call to `initializeSDK()` does not make the session start nor the user agent to be fetched if they're already available.
+    /// Validates that a call to `initializeSDK()` does not make the session start nor the user agent to be fetched
+    /// if they're already available.
     func testInitializeDoesNotTriggersSessionStartNorUserAgentFetchIfNotNeeded() {
         // Set session and user agent so the initializer recognizes they do not need to be generated
         mocks.sessionInfoProvider.session = AppSession()
         mocks.userAgentProvider.privateCachedUserAgent = "some user agent"
 
         // Initialize
-        initializer.initializeSDK(with: configuration, modules: attemptedModules, moduleObserver: modulesObserver)
+        initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check that session is not started and user agent is not fetched
@@ -52,15 +56,16 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
         XCTAssertEqual(mocks.userAgentProvider.privateCachedUserAgent, "some user agent")
     }
 
-    /// Validates that a call to `initializeSDK()` with client-side modules initializes those modules immediately while fetching the app config in the background.
+    /// Validates that a call to `initializeSDK()` with client-side modules initializes those modules immediately
+    /// while fetching the app config in the background.
     func testInitializeWithClientModulesIfNotInitialized() {
         // Set the CMP adapter initial value to nil so it's replaced by the module provided
         mocks.consentManager.adapter = nil
 
         // Initialize
-        initializer.initializeSDK(with: configuration, modules: attemptedModules, moduleObserver: modulesObserver)
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 0)
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 0)
+        initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check that module initializers were created for each module  and asked to initialize,
@@ -126,7 +131,7 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
         mocks.consentManager.adapter = existingCMPAdapter
 
         // Initialize
-        initializer.initializeSDK(with: configuration, modules: attemptedModules, moduleObserver: modulesObserver)
+        initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check that CMP was not replaced by one of the new modules
@@ -138,9 +143,12 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
     func testInitializeWithBackendModulesIfNotInitialized() {
         // Set the CMP adapter initial value to nil so it's replaced by the module provided
         mocks.consentManager.adapter = nil
+        mocks.appConfigRepository.config = .build(chartboostAppID: nil) // no saved chartboost app ID
+
+        let configuration = SDKConfiguration(chartboostAppID: "", modules: [])
 
         // Initialize with no client-side modules
-        initializer.initializeSDK(with: configuration, modules: [], moduleObserver: modulesObserver)
+        initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check that the app config fetch started
@@ -148,11 +156,12 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
         XCTAssertIdentical(mocks.appConfigRepository.fetchAppConfigConfigurationLastValue, configuration)
 
         // Make the config fetch finish successfully with some backend-side modules
-        mocks.appConfigRepository.config = .build(modules: [
-            .init(className: "ModuleClassName1", identifier: "module1", credentials: JSON(value: ["param1": 2])),
-            .init(className: "ModuleClassName2", identifier: "module2", credentials: nil),
-            .init(className: "ModuleClassName3", identifier: "module3_cmp", credentials: nil)
-        ])
+        let modulesInfo: [AppConfig.ModuleInfo] = [
+            .init(className: "ModuleClassName1", nonNativeClassName: nil, identifier: "module1", credentials: JSON(value: ["param1": 2])),
+            .init(className: "ModuleClassName2", nonNativeClassName: nil, identifier: "module2", credentials: nil),
+            .init(className: nil, nonNativeClassName: "ModuleClassName3", identifier: "module3_cmp", credentials: nil),
+        ]
+        mocks.appConfigRepository.config = .build(modules: modulesInfo)
         mocks.appConfigRepository.fetchAppConfigCompletionLastValue?(nil)
         // Set the modules to return by the module factory
         mocks.moduleFactory.makeModuleReturnValues = attemptedModules
@@ -160,8 +169,7 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Check that the backend-side modules were instantiated using the module factory
         XCTAssertEqual(mocks.moduleFactory.makeModuleCallCount, 3)
-        XCTAssertEqual(mocks.moduleFactory.makeModuleClassNameAllValues, ["ModuleClassName1", "ModuleClassName2", "ModuleClassName3"])
-        XCTAssertEqual(mocks.moduleFactory.makeModuleCredentialsAllValues as? [[String: Int]?], [["param1": 2], nil, nil])
+        XCTAssertEqual(mocks.moduleFactory.makeModuleInfoAllValues, modulesInfo)
 
         // Check that module initializers were created for each module and asked to initialize
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 3)
@@ -220,27 +228,35 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Initialize again with 1 duplicate and 1 non-duplicate client-side module, 1 duplicate and 1 non-duplicate backend module.
         let clientSideModules = [
-            InitializableModuleMock(id: "module1"), // duplicate
-            InitializableModuleMock(id: "nondup1")  // non-duplicate
+            ModuleMock(moduleID: "module1"), // duplicate
+            ModuleMock(moduleID: "nondup1"),  // non-duplicate
         ]
         let backendSideModules = [
-            InitializableModuleMock(id: "nondup2")  // non-duplicate
+            ModuleMock(moduleID: "nondup2")  // non-duplicate
         ]
-        mocks.appConfigRepository.config = .build(modules: [
-            .init(className: "ModuleClassName1", identifier: "module3_cmp", credentials: JSON(value: ["param1": 2])),   // duplicate
-            .init(className: "ModuleClassName2", identifier: "nondup2", credentials: nil)   // non-duplicate
-        ])
+        let modulesInfo: [AppConfig.ModuleInfo] = [
+            // duplicate
+            .init(className: "ModuleClassName1", nonNativeClassName: nil, identifier: "module3_cmp", credentials: JSON(value: ["p1": 2])),
+            // non-duplicate
+            .init(className: "ModuleClassName2", nonNativeClassName: nil, identifier: "nondup2", credentials: nil),
+        ]
+        mocks.appConfigRepository.config = .build(modules: modulesInfo)
         mocks.moduleFactory.makeModuleReturnValues = backendSideModules
 
         // Initialize
-        initializer.initializeSDK(with: configuration, modules: clientSideModules, moduleObserver: modulesObserver)
+        initializer.initializeSDK(
+            configuration: .init(
+                chartboostAppID: "",
+                modules: clientSideModules
+            ),
+            moduleObserver: modulesObserver
+        )
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check that only the non-duplicate backend-side module was instantiated
         // Check that the backend-side modules were instantiated using the module factory
         XCTAssertEqual(mocks.moduleFactory.makeModuleCallCount, 1)
-        XCTAssertEqual(mocks.moduleFactory.makeModuleClassNameAllValues, ["ModuleClassName2"])
-        XCTAssertEqual(mocks.moduleFactory.makeModuleCredentialsAllValues as? [[String: Int]?], [nil])
+        XCTAssertEqual(mocks.moduleFactory.makeModuleInfoAllValues, [modulesInfo[1]])
 
         // Check that module initializers were created and initialized for the two non-duplicate modules
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 2)
@@ -283,7 +299,13 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Initialize again the second module
         let module = attemptedModules[1]
-        initializer.initializeSDK(with: configuration, modules: [module], moduleObserver: modulesObserver)
+        initializer.initializeSDK(
+            configuration: .init(
+                chartboostAppID: "",
+                modules: [module]
+            ),
+            moduleObserver: modulesObserver
+        )
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check a module initializer was created for the module and asked to initialize
@@ -309,7 +331,7 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
         mocks.consentManager.adapter = nil
 
         // Initialize
-        initializer.initializeSDK(with: configuration, modules: attemptedModules, moduleObserver: modulesObserver)
+        initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Complete the consent module initialization with a failure
@@ -320,5 +342,107 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Check that CMP module was not set
         XCTAssertNil(mocks.consentManager.adapter)
+    }
+
+    /// Validates that `skippedModuleIDs` drops matching client-side and backend-side modules.
+    func testModuleIDsSkipped() throws {
+        let clientSideModule1 = ModuleMock(moduleID: "module1")
+        let clientSideModule2 = ModuleMock(moduleID: "module2")
+        let configuration = SDKConfiguration(
+            chartboostAppID: "",
+            modules: [clientSideModule1, clientSideModule2],
+            skippedModuleIDs: ["no match", clientSideModule1.moduleID, "backend-side-module2"]
+        )
+
+        // Initialize
+        initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
+        waitForTasksDispatchedOnBackgroundQueue()
+
+        // Check that module initializers were created only for the non-skipped module.
+        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 1)
+        let clientModulesInitialized = mocks.moduleInitializerFactory.makeModuleInitializerModuleAllValues
+        let clientModuleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
+        XCTAssertEqual(clientModulesInitialized.count, 1)
+        XCTAssertEqual(clientModulesInitialized[0].moduleID, "module2")
+        XCTAssertEqual(clientModuleInitializers.count, 1)
+        XCTAssertEqual(clientModuleInitializers[0].initializeCallCount, 1)
+
+        // Now make the config fetch finish successfully with a few backend-side modules
+        mocks.moduleInitializerFactory.reset()  // clear existing records to make next checks easier
+        let backendSideModule1 = ModuleMock(moduleID: "backend-side-module1")
+        let backendSideModule2 = ModuleMock(moduleID: "backend-side-module2")
+        mocks.moduleFactory.makeModuleReturnValues = [backendSideModule1, backendSideModule2]
+        let modulesInfo: [AppConfig.ModuleInfo] = [
+            .init(className: "someModuleClass1", nonNativeClassName: nil, identifier: "backend-side-module1", credentials: nil),
+            .init(className: "someModuleClass2", nonNativeClassName: nil, identifier: "backend-side-module2", credentials: nil),
+        ]
+        mocks.appConfigRepository.config = .build(modules: modulesInfo)
+        mocks.appConfigRepository.fetchAppConfigCompletionLastValue?(nil)
+        waitForTasksDispatchedOnBackgroundQueue()
+
+        // Check that module initializers were created only for the non-skipped module.
+        XCTAssertEqual(mocks.moduleFactory.makeModuleCallCount, 2)
+        XCTAssertEqual(mocks.moduleFactory.makeModuleInfoAllValues, modulesInfo)
+        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 1)
+        let backendModulesInitialized = mocks.moduleInitializerFactory.makeModuleInitializerModuleAllValues
+        let backendModuleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
+        XCTAssertEqual(backendModulesInitialized.count, 1)
+        XCTAssertEqual(backendModulesInitialized[0].moduleID, "backend-side-module1")
+        XCTAssertEqual(backendModuleInitializers.count, 1)
+        XCTAssertEqual(backendModuleInitializers[0].initializeCallCount, 1)
+    }
+
+    /// Validates that different values for Chartboost App ID are ignored after the first successul initialization.
+    func testChartboostAppIDCannotBeChangedAfterSuccessfulInit() throws {
+        let module1 = ModuleMock(moduleID: "module1")
+        let module2 = ModuleMock(moduleID: "module2")
+        let configuration = SDKConfiguration(
+            chartboostAppID: "appID_1",
+            modules: [module1, module2]
+        )
+        mocks.appConfigRepository.config = .build(chartboostAppID: nil) // no saved chartboost app ID
+
+        // Initialize
+        initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
+        waitForTasksDispatchedOnBackgroundQueue()
+
+        // Check that modules are initialized with the first Chartboost App ID
+        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 2)
+        let moduleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
+        XCTAssertEqual(moduleInitializers.count, 2)
+        XCTAssertEqual(moduleInitializers[0].initializeConfigurationLastValue?.chartboostAppID, "appID_1")
+        XCTAssertEqual(moduleInitializers[1].initializeConfigurationLastValue?.chartboostAppID, "appID_1")
+
+        // Now make the config fetch finish successfully
+        mocks.appConfigRepository.config = .build(modules: [])
+        mocks.appConfigRepository.fetchAppConfigCompletionLastValue?(nil)
+        mocks.appConfigRepository.config = .build(chartboostAppID: "appID_1") // save chartboost app ID
+        waitForTasksDispatchedOnBackgroundQueue()
+
+        // Now try to initialize again with a different Chartboost App ID
+        let module3 = ModuleMock(moduleID: "module3")
+        let module4 = ModuleMock(moduleID: "module4")
+        let configuration2 = SDKConfiguration(
+            chartboostAppID: "appID_2",
+            modules: [module3, module4]
+        )
+        initializer.initializeSDK(configuration: configuration2, moduleObserver: modulesObserver)
+        waitForTasksDispatchedOnBackgroundQueue()
+
+        // Check that modules are initialized with the first Chartboost App ID (not the new one!)
+        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 4)
+        let secondBatchOfModuleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
+        XCTAssertEqual(secondBatchOfModuleInitializers.count, 4)
+        XCTAssertEqual(secondBatchOfModuleInitializers[2].initializeConfigurationLastValue?.chartboostAppID, "appID_1")
+        XCTAssertEqual(secondBatchOfModuleInitializers[3].initializeConfigurationLastValue?.chartboostAppID, "appID_1")
+    }
+
+    /// Validates that the network status provider starts on init.
+    func testInitializeStartsNetworkStatusProvider() {
+        // Initialize
+        initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
+        waitForTasksDispatchedOnBackgroundQueue()
+
+        XCTAssertEqual(mocks.networkStatusProvider.startNotifierCallCount, 1)
     }
 }

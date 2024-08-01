@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,9 +7,8 @@ import Foundation
 
 /// A HTTP request to obtain the app configuration required to initialize the Core SDK.
 struct AppConfigRequest: HTTPJSONRequest, Equatable {
-
     /// The request URL.
-    let url = BackendEndpoint.initialize
+    let url = BackendEndpoint.config
 
     /// The request HTTP method.
     let method: HTTPMethod = .post
@@ -21,12 +20,9 @@ struct AppConfigRequest: HTTPJSONRequest, Equatable {
 // MARK: Request Body
 
 extension AppConfigRequest {
-
     /// An encodable definition of the body included in ``AppConfigRequest`` sent to the backend.
     struct Body: Encodable, Equatable {
-
         struct Configuration: Encodable, Equatable {
-
             struct App: Encodable, Equatable {
                 let bundleId: String?
                 let publisherApplicationIdentifier: String?
@@ -57,7 +53,6 @@ extension AppConfigRequest {
         }
 
         struct Device: Encodable, Equatable {
-
             struct Network: Encodable, Equatable {
                 let connectionType: String?
             }
@@ -93,30 +88,33 @@ extension AppConfigRequest {
 // MARK: Response Body
 
 extension AppConfigRequest {
-
     /// A decodable definition of the response body expected in a ``AppConfigRequest`` response from backend.
     struct ResponseBody: Decodable, Equatable {
+        struct PlatformContainer: Decodable, Equatable {
+            struct Module: Decodable, Equatable {
+                struct Config: Decodable, Equatable {
+                    let version: String?
+                    let params: JSON<[String: Any]>?
+                }
 
-        struct Module: Decodable, Equatable {
-
-            struct Config: Decodable, Equatable {
-                let version: String
-                let params: JSON<[String: Any]>?
+                let className: String?
+                let nonNativeClassName: String?
+                let config: Config?
+                let id: String
             }
 
-            let className: String
-            let config: Config
-            let id: String
+            let consentUpdateBatchDelayMs: Int?
+            let coreInitializationDelayBaseMs: Int?
+            let coreInitializationDelayMaxMs: Int?
+            let coreInitializationRetryCountMax: Int?
+            let logLevel: String?
+            let moduleInitializationDelayBaseMs: Int?
+            let moduleInitializationDelayMaxMs: Int?
+            let moduleInitializationRetryCountMax: Int?
+            let schemaVersion: String?
+            let modules: [Module]?
         }
 
-        let isChildDirected: Bool?
-        let coreInitializationDelayBaseMs: Int?
-        let coreInitializationDelayMaxMs: Int?
-        let coreInitializationRetryCountMax: Int?
-        let moduleInitializationDelayBaseMs: Int?
-        let moduleInitializationDelayMaxMs: Int?
-        let moduleInitializationRetryCountMax: Int?
-        let schemaVersion: String?
-        let modules: [Module]?
+        let ios: PlatformContainer?
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -9,7 +9,6 @@ import Foundation
 /// - warning: Make sure to access UI-related properties from the main thread.
 @objc(CBCAttributionEnvironment)
 public protocol AttributionEnvironment {
-
     /// The system advertising identifier (IFA).
     var advertisingID: String? { get }
 

@@ -1,13 +1,12 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-@testable import ChartboostCoreSDK
 import AppTrackingTransparency
+@testable import ChartboostCoreSDK
 
 final class EnvironmentMock: AdvertisingEnvironment, AnalyticsEnvironment, AttributionEnvironment {
-
     var appTrackingTransparencyStatus: ATTrackingManager.AuthorizationStatus = .authorized
 
     var appSessionDuration: TimeInterval = 34.5
@@ -30,9 +29,9 @@ final class EnvironmentMock: AdvertisingEnvironment, AnalyticsEnvironment, Attri
 
     var frameworkVersion: String? = "some framework version"
 
-    var isLimitAdTrackingEnabled: Bool = false
+    var isLimitAdTrackingEnabled = false
 
-    var isUserUnderage: Bool = false
+    var isUserUnderage = false
 
     var networkConnectionType: ChartboostCoreSDK.NetworkConnectionType = .wifi
 
@@ -46,11 +45,11 @@ final class EnvironmentMock: AdvertisingEnvironment, AnalyticsEnvironment, Attri
 
     var publisherSessionID: String? = "some pub session id"
 
-    var screenHeight: Double = 45.55
+    var screenHeightPixels: Double = 45.55
 
     var screenScale: Double = 2.3
 
-    var screenWidth: Double = 9403.44
+    var screenWidthPixels: Double = 9403.44
 
     var vendorID: String? = "some vendor id"
 
@@ -60,5 +59,11 @@ final class EnvironmentMock: AdvertisingEnvironment, AnalyticsEnvironment, Attri
 
     func userAgent(completion: @escaping (String?) -> Void) {
         completion("some user agent")
+    }
+
+    func addObserver(_ observer: EnvironmentObserver) {
+    }
+
+    func removeObserver(_ observer: EnvironmentObserver) {
     }
 }

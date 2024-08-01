@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,7 +7,6 @@ import Foundation
 
 /// A request that provides all the info needed to build a URL request from it.
 protocol URLRequestBuildableJSONRequest {
-
     /// The associated request body type.
     associatedtype Body: Encodable
 
@@ -23,7 +22,6 @@ protocol URLRequestBuildableJSONRequest {
 
 /// A builder that knows how to make URL requests from a JSON request model that conforms to URLRequestBuildableJSONRequest.
 struct JSONURLRequestBuilder<Request: HTTPRequest>: URLRequestBuilder where Request: URLRequestBuildableJSONRequest {
-
     /// Returns a `URLRequest` using the information provided by a ``HTTPRequest`` with a JSON-decodable body.
     static func makeURLRequest(from request: Request) throws -> URLRequest {
         try makeURLRequest(

@@ -1,21 +1,24 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
-
     let cmp = ChartboostCoreConsentManagementPlatform()
+
+    override func setUp() {
+        super.setUp()
+
+        // Disable consent update batching by default to make testing easier
+        mocks.appConfigRepository.config = AppConfig.build(consentUpdateBatchDelay: 0)
+    }
 
     /// Validates that the cmp properties have default values and its methods are no-ops when the adapter is not set.
     func testDefaultValuesWhenNoAdapterIsSet() {
         XCTAssertEqual(cmp.shouldCollectConsent, false)
-        XCTAssertEqual(cmp.consentStatus, .unknown)
-        XCTAssertEqual(cmp.partnerConsentStatus, [:])
-        XCTAssertEqual(cmp.objc_partnerConsentStatus, [:])
         XCTAssertEqual(cmp.consents, [:])
         var completionCalls = 0
         cmp.grantConsent(source: .user) { result in
@@ -26,7 +29,7 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
             XCTAssertFalse(result)
             completionCalls += 1
         }
-        cmp.resetConsent() { result in
+        cmp.resetConsent { result in
             XCTAssertFalse(result)
             completionCalls += 1
         }
@@ -49,54 +52,24 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         XCTAssertFalse(cmp.shouldCollectConsent)
     }
 
-    /// Validates that calls to `consentStatus` return the adapter value.
-    func testConsentStatus() {
-        let adapter = ConsentAdapterMock()
-        cmp.adapter = adapter
-
-        adapter.consentStatusValue = .denied
-        XCTAssertEqual(cmp.consentStatus, .denied)
-
-        adapter.consentStatusValue = .granted
-        XCTAssertEqual(cmp.consentStatus, .granted)
-
-        adapter.consentStatusValue = .unknown
-        XCTAssertEqual(cmp.consentStatus, .unknown)
-    }
-
-    /// Validates that calls to `partnerConsentStatus` return the adapter value.
-    func testPartnerConsentStatus() {
-        let adapter = ConsentAdapterMock()
-        cmp.adapter = adapter
-
-        adapter.partnerConsentStatusValue = [:]
-        XCTAssertEqual(cmp.partnerConsentStatus, [:])
-        XCTAssertEqual(cmp.objc_partnerConsentStatus, [:])
-
-        adapter.partnerConsentStatusValue = ["partner 1": .granted, "partner 2": .denied]
-        XCTAssertEqual(cmp.partnerConsentStatus, ["partner 1": .granted, "partner 2": .denied])
-        XCTAssertEqual(
-            cmp.objc_partnerConsentStatus,
-            ["partner 1": NSNumber(integerLiteral: ConsentStatus.granted.rawValue),
-             "partner 2": NSNumber(integerLiteral: ConsentStatus.denied.rawValue)]
-        )
-        adapter.partnerConsentStatusValue = ["partner 1": .denied, "partner 2": .denied, "partner 3": .unknown]
-        XCTAssertEqual(cmp.partnerConsentStatus, ["partner 1": .denied, "partner 2": .denied, "partner 3": .unknown])
-        XCTAssertEqual(
-            cmp.objc_partnerConsentStatus,
-            ["partner 1": NSNumber(integerLiteral: ConsentStatus.denied.rawValue),
-             "partner 2": NSNumber(integerLiteral: ConsentStatus.denied.rawValue),
-             "partner 3": NSNumber(integerLiteral: ConsentStatus.unknown.rawValue)]
-        )
-    }
-
     /// Validates that calls to `consents` return the adapter value.
     func testConsents() {
         let adapter = ConsentAdapterMock()
         cmp.adapter = adapter
 
-        adapter.consents = [.ccpaOptIn: .denied, .gpp: "some value", .gdprConsentGiven: .granted]
-        XCTAssertEqual(cmp.consents, [.ccpaOptIn: .denied, .gpp: "some value", .gdprConsentGiven: .granted])
+        adapter.consents = [
+            ConsentKeys.ccpaOptIn: ConsentValues.denied,
+            ConsentKeys.gpp: "some value",
+            ConsentKeys.gdprConsentGiven: ConsentValues.granted,
+        ]
+        XCTAssertEqual(
+            cmp.consents,
+            [
+                ConsentKeys.ccpaOptIn: ConsentValues.denied,
+                ConsentKeys.gpp: "some value",
+                ConsentKeys.gdprConsentGiven: ConsentValues.granted,
+            ]
+        )
 
         adapter.consents = [:]
         XCTAssertEqual(cmp.consents, [:])
@@ -114,7 +87,7 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         }
 
         XCTAssertEqual(adapter.grantConsentStatusCallCount, 1)
-        XCTAssertEqual(adapter.grantConsentStatusSourceLastValue, .developer)
+        XCTAssertEqual(adapter.grantConsentSourceLastValue, .developer)
         adapter.grantConsentStatusLastCompletion?(true)
 
         XCTAssertTrue(completed)
@@ -132,7 +105,7 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         }
 
         XCTAssertEqual(adapter.denyConsentStatusCallCount, 1)
-        XCTAssertEqual(adapter.denyConsentStatusSourceLastValue, .user)
+        XCTAssertEqual(adapter.denyConsentSourceLastValue, .user)
         adapter.denyConsentStatusLastCompletion?(false)
 
         XCTAssertTrue(completed)
@@ -144,7 +117,7 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         cmp.adapter = adapter
 
         var completed = false
-        cmp.resetConsent() { result in
+        cmp.resetConsent { result in
             XCTAssertTrue(result)
             completed = true
         }
@@ -175,53 +148,45 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
     func testAddObserver() {
         let observer1 = ConsentObserverMock()
         let observer2 = ConsentObserverMock()
+        let adapter = ConsentAdapterMock()
 
         cmp.addObserver(observer1)
 
-        cmp.adapter = ConsentAdapterMock()
+        cmp.adapter = adapter
         waitForTasksDispatchedOnMainQueue()
 
         XCTAssertEqual(observer1.onConsentModuleReadyCallCount, 1)
 
-        cmp.onConsentStatusChange(.denied)
-        waitForTasksDispatchedOnMainQueue()
-
-        XCTAssertEqual(observer1.onConsentStatusChangeCallCount, 1)
-        XCTAssertEqual(observer1.onConsentStatusChangeLastValue, .denied)
-
-        cmp.onConsentChange(standard: .ccpaOptIn, value: .doesNotApply)
+        adapter.consents = [ConsentKeys.tcf: "12345"]
+        cmp.onConsentChange(key: ConsentKeys.tcf)
         waitForTasksDispatchedOnMainQueue()
 
         XCTAssertEqual(observer1.onConsentChangeCallCount, 1)
-        XCTAssertEqual(observer1.onConsentChangeConsentStandardLastValue, .ccpaOptIn)
-        XCTAssertEqual(observer1.onConsentChangeConsentValueLastValue, .doesNotApply)
+        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
 
         cmp.addObserver(observer2)
-        cmp.onConsentStatusChange(.granted)
-        waitForTasksDispatchedOnMainQueue()
-
-        XCTAssertEqual(observer1.onConsentStatusChangeCallCount, 2)
-        XCTAssertEqual(observer1.onConsentStatusChangeLastValue, .granted)
-        XCTAssertEqual(observer2.onConsentStatusChangeCallCount, 1)
-        XCTAssertEqual(observer2.onConsentStatusChangeLastValue, .granted)
-
-        cmp.onConsentChange(standard: .ccpaOptIn, value: .denied)
-        cmp.onPartnerConsentStatusChange(partnerID: "partner 1", status: .granted)
-        cmp.onPartnerConsentStatusChange(partnerID: "partner 2", status: .denied)
+        adapter.consents = [ConsentKeys.tcf: "12345", "custom_key": "abcd"]
+        cmp.onConsentChange(key: "custom_key")
         waitForTasksDispatchedOnMainQueue()
 
         XCTAssertEqual(observer1.onConsentChangeCallCount, 2)
-        XCTAssertEqual(observer1.onConsentChangeConsentStandardLastValue, .ccpaOptIn)
-        XCTAssertEqual(observer1.onConsentChangeConsentValueLastValue, .denied)
-        XCTAssertEqual(observer1.onPartnerConsentStatusChangeCallCount, 2)
-        XCTAssertEqual(observer1.onPartnerConsentStatusChangeLastValue?.partnerID, "partner 2")
-        XCTAssertEqual(observer1.onPartnerConsentStatusChangeLastValue?.status, .denied)
+        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, ["custom_key"] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
         XCTAssertEqual(observer2.onConsentChangeCallCount, 1)
-        XCTAssertEqual(observer2.onConsentChangeConsentStandardLastValue, .ccpaOptIn)
-        XCTAssertEqual(observer2.onConsentChangeConsentValueLastValue, .denied)
-        XCTAssertEqual(observer2.onPartnerConsentStatusChangeCallCount, 2)
-        XCTAssertEqual(observer2.onPartnerConsentStatusChangeLastValue?.partnerID, "partner 2")
-        XCTAssertEqual(observer2.onPartnerConsentStatusChangeLastValue?.status, .denied)
+        XCTAssertEqual(observer2.onConsentChangeModifiedKeysLastValue, ["custom_key"] as Set<String>)
+        XCTAssertEqual(observer2.onConsentChangeFullConsentsLastValue, adapter.consents)
+
+        adapter.consents = [ConsentKeys.tcf: "09876", "custom_key": "abcd"]
+        cmp.onConsentChange(key: ConsentKeys.tcf)
+        waitForTasksDispatchedOnMainQueue()
+
+        XCTAssertEqual(observer1.onConsentChangeCallCount, 3)
+        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer2.onConsentChangeCallCount, 2)
+        XCTAssertEqual(observer2.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf] as Set<String>)
+        XCTAssertEqual(observer2.onConsentChangeFullConsentsLastValue, adapter.consents)
     }
 
     /// Validates that observers can be removed and consent updates are no longer forwarded to them.
@@ -238,34 +203,25 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         XCTAssertEqual(observer1.onConsentModuleReadyCallCount, 1)
         XCTAssertEqual(observer2.onConsentModuleReadyCallCount, 1)
 
-        cmp.onConsentStatusChange(.denied)
+        cmp.onConsentChange(key: ConsentKeys.tcf)
         waitForTasksDispatchedOnMainQueue()
 
-        XCTAssertEqual(observer1.onConsentStatusChangeCallCount, 1)
-        XCTAssertEqual(observer2.onConsentStatusChangeCallCount, 1)
+        XCTAssertEqual(observer1.onConsentChangeCallCount, 1)
+        XCTAssertEqual(observer2.onConsentChangeCallCount, 1)
 
         cmp.removeObserver(observer1)
-        cmp.onConsentStatusChange(.granted)
+        cmp.onConsentChange(key: ConsentKeys.tcf)
         waitForTasksDispatchedOnMainQueue()
 
-        XCTAssertEqual(observer1.onConsentStatusChangeCallCount, 1)
-        XCTAssertEqual(observer2.onConsentStatusChangeCallCount, 2)
-
-        cmp.onConsentChange(standard: .ccpaOptIn, value: .denied)
-        waitForTasksDispatchedOnMainQueue()
-
-        XCTAssertEqual(observer1.onConsentChangeCallCount, 0)
-        XCTAssertEqual(observer2.onConsentChangeCallCount, 1)
+        XCTAssertEqual(observer1.onConsentChangeCallCount, 1)
+        XCTAssertEqual(observer2.onConsentChangeCallCount, 2)
 
         cmp.removeObserver(observer2)
-        cmp.onConsentStatusChange(.unknown)
-        cmp.onConsentChange(standard: .tcf, value: "some value")
+        cmp.onConsentChange(key: ConsentKeys.gpp)
         waitForTasksDispatchedOnMainQueue()
 
-        XCTAssertEqual(observer1.onConsentStatusChangeCallCount, 1)
-        XCTAssertEqual(observer2.onConsentStatusChangeCallCount, 2)
-        XCTAssertEqual(observer1.onConsentChangeCallCount, 0)
-        XCTAssertEqual(observer2.onConsentChangeCallCount, 1)
+        XCTAssertEqual(observer1.onConsentChangeCallCount, 1)
+        XCTAssertEqual(observer2.onConsentChangeCallCount, 2)
     }
 
     /// Validates that adding the same observer twice does nothing the second time, so callbacks are
@@ -276,11 +232,11 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         cmp.addObserver(observer)
         cmp.addObserver(observer)
 
-        cmp.onConsentStatusChange(.denied)
+        cmp.onConsentChange(key: ConsentKeys.tcf)
         waitForTasksDispatchedOnMainQueue()
 
-        XCTAssertEqual(observer.onConsentStatusChangeCallCount, 1)
-        XCTAssertEqual(observer.onConsentStatusChangeLastValue, .denied)
+        XCTAssertEqual(observer.onConsentChangeCallCount, 1)
+        XCTAssertEqual(observer.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf] as Set<String>)
     }
 
     /// Validates that the cmp does not retain its observers.
@@ -292,16 +248,16 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
             weakObserver = strongObserver
             cmp.addObserver(strongObserver)
 
-            cmp.onConsentStatusChange(.denied)
+            cmp.onConsentChange(key: ConsentKeys.tcf)
             waitForTasksDispatchedOnMainQueue()
 
-            XCTAssertEqual(strongObserver.onConsentStatusChangeCallCount, 1)
+            XCTAssertEqual(strongObserver.onConsentChangeCallCount, 1)
         }
 
         XCTAssertNil(weakObserver)
 
         // Just another call to make sure nothing weird happens and there's no crash
-        cmp.onConsentStatusChange(.granted)
+        cmp.onConsentChange(key: ConsentKeys.tcf)
         waitForTasksDispatchedOnMainQueue()
     }
 
@@ -324,5 +280,51 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
 
         adapter2.shouldCollectConsent = false
         XCTAssertFalse(cmp.shouldCollectConsent)
+    }
+
+    /// Validates that consent adapter updates are batched when the setting is enabled.
+    func testConsentChangeBatching() {
+        mocks.appConfigRepository.config = AppConfig.build(consentUpdateBatchDelay: 0.2)
+        ChartboostCore.logLevel = .verbose
+
+        let observer1 = ConsentObserverMock()
+        let observer2 = ConsentObserverMock()
+        let adapter = ConsentAdapterMock()
+
+        cmp.addObserver(observer1)
+        cmp.addObserver(observer2)
+        cmp.adapter = adapter
+        waitForTasksDispatchedOnMainQueue()
+
+        // Validate that multiple adapter calls result in a single observers call
+        adapter.consents = [ConsentKeys.tcf: "12345"]
+        cmp.onConsentChange(key: ConsentKeys.tcf)
+        adapter.consents = [ConsentKeys.tcf: "12345", ConsentKeys.ccpaOptIn: "abcdef"]
+        cmp.onConsentChange(key: ConsentKeys.ccpaOptIn)
+        waitForTasksDispatchedOnMainQueue()
+
+        wait(1) // delay is set to 0.5 but we add an extra wait to account for slow runners
+
+        XCTAssertEqual(observer1.onConsentChangeCallCount, 1)
+        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf, ConsentKeys.ccpaOptIn] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer2.onConsentChangeCallCount, 1)
+        XCTAssertEqual(observer2.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf, ConsentKeys.ccpaOptIn] as Set<String>)
+        XCTAssertEqual(observer2.onConsentChangeFullConsentsLastValue, adapter.consents)
+
+        // Validate that a next adapter call is properly forwarded to observers
+
+        adapter.consents = [ConsentKeys.tcf: "12345"]
+        cmp.onConsentChange(key: ConsentKeys.ccpaOptIn)
+        waitForTasksDispatchedOnMainQueue()
+
+        wait(1) // delay is set to 0.5 but we add an extra wait to account for slow runners
+
+        XCTAssertEqual(observer1.onConsentChangeCallCount, 2)
+        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, [ConsentKeys.ccpaOptIn] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer2.onConsentChangeCallCount, 2)
+        XCTAssertEqual(observer2.onConsentChangeModifiedKeysLastValue, [ConsentKeys.ccpaOptIn] as Set<String>)
+        XCTAssertEqual(observer2.onConsentChangeFullConsentsLastValue, adapter.consents)
     }
 }

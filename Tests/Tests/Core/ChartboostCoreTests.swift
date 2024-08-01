@@ -1,20 +1,19 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class ChartboostCoreTests: ChartboostCoreTestCase {
-
     /// Validates that `initializeSDK()` calls are forwarded to the proper component.
     func testInitializeSDK() {
-        let configuration = SDKConfiguration(chartboostAppID: "")
-        let modules = [InitializableModuleMock(), InitializableModuleMock()]
-        let observer = InitializableModuleObserverMock()
+        let modules = [ModuleMock(), ModuleMock()]
+        let configuration = SDKConfiguration(chartboostAppID: "", modules: modules)
+        let observer = ModuleObserverMock()
 
-        ChartboostCore.initializeSDK(with: configuration, modules: modules, moduleObserver: observer)
+        ChartboostCore.initializeSDK(configuration: configuration, moduleObserver: observer)
 
         XCTAssertEqual(mocks.sdkInitializer.initializeSDKCallCount, 1)
         XCTAssertEqual(mocks.sdkInitializer.initializeSDKConfigurationLastValue, configuration)
@@ -39,7 +38,7 @@ class ChartboostCoreTests: ChartboostCoreTestCase {
     /// Validates that the public `logLevel` property is in sync with the console handler's property.
     func testLogLevel() {
         // Set the initial log level value
-        Logger.consoleLogHandler.logLevel = .debug
+        ConsoleLogHandler.core.logLevel = .debug
 
         // Check that ChartboostCore's value corresponds to the initial value
         XCTAssertEqual(ChartboostCore.logLevel, .debug)
@@ -49,7 +48,7 @@ class ChartboostCoreTests: ChartboostCoreTestCase {
 
         // Check that both public and internal properties reflect the new value
         XCTAssertEqual(ChartboostCore.logLevel, .info)
-        XCTAssertEqual(Logger.consoleLogHandler.logLevel, .info)
+        XCTAssertEqual(ConsoleLogHandler.core.logLevel, .info)
     }
 
     /// Validates that `attachLogHandler(_:)` makes it so the new handler receives log entries.
@@ -83,5 +82,19 @@ class ChartboostCoreTests: ChartboostCoreTestCase {
 
         // Check that the handler received no calls
         XCTAssertEqual(handler.handleCallCount, 0)
+    }
+
+    /// Validates that the private `nonNativeModuleFactory` property is accessible through reflection.
+    func testUnityModuleFactory() throws {
+        // Access when not set
+        XCTAssertNil(ChartboostCore.value(forKey: "nonNativeModuleFactory"))
+
+        // Set new value
+        let factory = ModuleFactoryMock()
+        ChartboostCore.perform(NSSelectorFromString("setNonNativeModuleFactory:"), with: factory)
+
+        // Check that the factory was set and that the getter returns the same value
+        XCTAssertIdentical(mocks.moduleFactory.nonNativeModuleFactory, factory)
+        XCTAssertIdentical(factory, ChartboostCore.value(forKey: "nonNativeModuleFactory") as? ModuleFactoryMock)
     }
 }

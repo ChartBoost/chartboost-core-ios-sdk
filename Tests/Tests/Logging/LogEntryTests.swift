@@ -1,13 +1,12 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class LogEntryTests: ChartboostCoreTestCase {
-
     /// Validates that the init assigns expected values to all the properties.
     func testInit() {
         let entry = LogEntry(

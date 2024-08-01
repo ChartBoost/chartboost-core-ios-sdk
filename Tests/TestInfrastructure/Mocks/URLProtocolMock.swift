@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -8,7 +8,6 @@ import Foundation
 /// This is for mocking `URLSession` data task handling. See this "Testing Tips & Tricks" WWDC
 /// session for demo: https://developer.apple.com/videos/play/wwdc2018/417/
 final class URLProtocolMock: URLProtocol {
-
     typealias URLRequestHandler = (URLRequest) throws -> (response: HTTPURLResponse?, data: Data?, error: Error?)
 
     static var dataTaskCallCount = 0

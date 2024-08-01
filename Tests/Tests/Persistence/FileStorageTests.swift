@@ -1,31 +1,42 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class ChartboostCoreFileStorageTests: ChartboostCoreTestCase {
-
     let fileStorage = ChartboostCoreFileStorage()
 
+    // swiftlint:disable force_try
     private var fileURL: URL {
         try! FileManager.default.url(
             for: .documentDirectory,
             in: .userDomainMask,
             appropriateFor: nil,
             create: true // This must be set to true when running on CI
-        ).appendingPathComponent("testFile")
+        )
+        .appendingPathComponent("testFile")
     }
+    // swiftlint:enable force_try
 
+    // swiftlint:disable force_try
     private var directoryURL: URL {
         try! FileManager.default.url(
             for: .documentDirectory,
             in: .userDomainMask,
             appropriateFor: nil,
             create: true // This must be set to true when running on CI
-        ).appendingPathComponent("testDirectory", isDirectory: true)
+        )
+        .appendingPathComponent("testDirectory", isDirectory: true)
+    }
+    // swiftlint:enable force_try
+
+    private let testDataString = "some data"
+
+    private func dataFromString(_ string: String) throws -> Data {
+        try XCTUnwrap(string.data(using: .utf8))
     }
 
     override func setUp() {
@@ -36,7 +47,6 @@ class ChartboostCoreFileStorageTests: ChartboostCoreTestCase {
         _ = try? FileManager.default.removeItem(at: fileURL)
         _ = try? FileManager.default.removeItem(at: directoryURL)
     }
-
 
     /// Validates that the file storage returns a proper value for the caches directory url.
     func testSystemDirectoryURL() throws {
@@ -76,24 +86,25 @@ class ChartboostCoreFileStorageTests: ChartboostCoreTestCase {
     /// Validates that the file storage `write(_:to:)` method writes the passed data into a file properly in an already existing directory.
     func testWriteDataIntoExistingDirectory() throws {
         // Write string data
-        try fileStorage.write("some data".data(using: .utf8)!, to: fileURL)
+        try fileStorage.write(dataFromString(testDataString), to: fileURL)
 
         // Check the file exists and contains the persisted data
-        XCTAssertEqual(try String(contentsOf: fileURL), "some data")
+        XCTAssertEqual(try String(contentsOf: fileURL), testDataString)
     }
 
-    /// Validates that the file storage `write(_:to:)` method writes the passed data into a file properly in an non-existing directory, by creating such directory first.
+    /// Validates that the file storage `write(_:to:)` method writes the passed data into a file properly
+    /// in an non-existing directory, by creating such directory first.
     func testWriteDataIntoNonExistingDirectory() throws {
         // Write string data
         let fileURL = directoryURL.appendingPathComponent("testFile")
-        try fileStorage.write("some data".data(using: .utf8)!, to: fileURL)
+        try fileStorage.write(dataFromString(testDataString), to: fileURL)
 
         // Check that the directory was created
         var isDirectory: ObjCBool = false
         let itemExists = FileManager.default.fileExists(atPath: directoryURL.path, isDirectory: &isDirectory)
         XCTAssertTrue(itemExists && isDirectory.boolValue)
         // Check the file exists and contains the persisted data
-        XCTAssertEqual(try String(contentsOf: fileURL), "some data")
+        XCTAssertEqual(try String(contentsOf: fileURL), testDataString)
 
         // Remove created file for cleanup
         try FileManager.default.removeItem(at: fileURL)
@@ -105,7 +116,7 @@ class ChartboostCoreFileStorageTests: ChartboostCoreTestCase {
         XCTAssertThrowsError(try fileStorage.readData(at: fileURL))
 
         // Create the file
-        let writtenData = "some content".data(using: .utf8)!
+        let writtenData = try dataFromString(testDataString)
         try writtenData.write(to: fileURL, options: .atomic)
 
         // Read data and check it is the expected value

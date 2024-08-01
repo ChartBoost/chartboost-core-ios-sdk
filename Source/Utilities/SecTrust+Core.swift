@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -6,7 +6,6 @@
 import Foundation
 
 extension SecTrust {
-
     /// Evaluates a trust reference synchronously.
     /// - parameter host: A string representing a URL host.
     /// - returns: A boolean value indicating whether the certificate is trusted.
@@ -27,7 +26,7 @@ extension SecTrust {
         if #available(iOS 12.0, *) {
             var error: CFError?
             let result = SecTrustEvaluateWithError(self, &error)
-            if let error = error {
+            if let error {
                 logger.error("SecTrustEvaluateWithError host: \(host), error: \(error.localizedDescription)")
             }
             return result

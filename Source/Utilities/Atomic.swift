@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -8,9 +8,8 @@ import Foundation
 /// A property wrapper that can be used to declare that a property is atomic.
 @propertyWrapper
 class Atomic<Value> {
-
     private let queue = DispatchQueue(label: "com.chartboost.core.atomic")
-    
+
     private var value: Value
 
     /// Initializer that can be used in order to declare any variable as atomic.

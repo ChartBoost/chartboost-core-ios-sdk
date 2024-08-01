@@ -1,13 +1,12 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
-
     let repository = ChartboostCoreAppConfigRepository()
 
     /// Validates that the initial config has proper default values.
@@ -15,13 +14,15 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
         XCTAssertEqual(
             repository.config,
             AppConfig(
+                chartboostAppID: nil,
+                consentUpdateBatchDelay: 0.5,
                 coreInitializationDelayBase: 1,
                 coreInitializationDelayMax: 30,
                 coreInitializationRetryCountMax: 3,
+                logLevelOverride: nil,
                 moduleInitializationDelayBase: 1,
                 moduleInitializationDelayMax: 30,
                 moduleInitializationRetryCountMax: 3,
-                isChildDirected: nil,
                 modules: []
             )
         )
@@ -34,7 +35,7 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
 
         // Start the fetch
         let configuration = SDKConfiguration(chartboostAppID: "some app id")
-        repository.fetchAppConfig(with: configuration) { error in
+        repository.fetchAppConfig(configuration: configuration) { error in
             // Check that fetch is successful
             XCTAssertNil(error)
             expectation.fulfill()
@@ -71,12 +72,12 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
     /// Validates that a call to `fetchAppConfig()` reports an error if the network manager fails to retrieve
     /// a backend config response.
     func testFetchAppConfigFailsWhenNetworkManagerFails() {
-        let expectedError = NSError(domain: "some domain", code: 12345)
+        let expectedError = NSError(domain: "some domain", code: 12_345)
         let expectation = self.expectation(description: "wait for fetch completion")
 
         // Start the fetch
         let configuration = SDKConfiguration(chartboostAppID: "some app id")
-        repository.fetchAppConfig(with: configuration) { error in
+        repository.fetchAppConfig(configuration: configuration) { error in
             // Check that fetch is failure
             XCTAssertIdentical(error as? NSError, expectedError)
             expectation.fulfill()
@@ -102,7 +103,7 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
 
         // Start the fetch
         let configuration = SDKConfiguration(chartboostAppID: "some app id")
-        repository.fetchAppConfig(with: configuration) { error in
+        repository.fetchAppConfig(configuration: configuration) { error in
             // Check that fetch is failure
             XCTAssertEqual(error as? ChartboostCoreAppConfigRepository.FetchAppConfigError, .receivedNilResponseBody)
             expectation.fulfill()
@@ -136,13 +137,16 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
 
         // Start the fetch
         let configuration = SDKConfiguration(chartboostAppID: "some app id")
-        repository.fetchAppConfig(with: configuration) { error in
+        repository.fetchAppConfig(configuration: configuration) { error in
             // Check that fetch is successful
             XCTAssertNil(error)
             expectation.fulfill()
         }
         // The fetchAppConfig() completion should be executed immediately
         waitForExpectations(timeout: 5)
+        // Wait for operations queued in the main queue to finish (the network manager call may be done right
+        // before the completion is called, instead of after).
+        waitForTasksDispatchedOnMainQueue()
 
         // Check that the network request was sent in the background
         XCTAssertEqual(mocks.appConfigRequestFactory.makeRequestCallCount, 1)
@@ -175,7 +179,7 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
 
         // Start the fetch
         let configuration = SDKConfiguration(chartboostAppID: "some app id")
-        repository.fetchAppConfig(with: configuration) { error in
+        repository.fetchAppConfig(configuration: configuration) { error in
             // Check that fetch is successful
             XCTAssertNil(error)
             expectation.fulfill()
@@ -184,6 +188,7 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
         waitForExpectations(timeout: 5)
 
         // Check that the network request was sent in the background
+        waitForTasksDispatchedOnBackgroundQueue()
         XCTAssertEqual(mocks.appConfigRequestFactory.makeRequestCallCount, 1)
         XCTAssertEqual(mocks.networkManager.sendCallCount, 1)
 

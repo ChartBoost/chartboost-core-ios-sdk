@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -9,22 +9,33 @@ import Foundation
 /// Provides users with access to all of Core's functionalities.
 @objcMembers
 public final class ChartboostCore: NSObject {
-
+    @Injected(\.advertisingEnvironment) private static var sharedAdvertisingEnvironment
+    @Injected(\.analyticsEnvironment) private static var sharedAnalyticsEnvironment
+    @Injected(\.attributionEnvironment) private static var sharedAttributionEnvironment
     @Injected(\.consentManager) private static var consentManager
-
+    @Injected(\.moduleFactory) private static var moduleFactory
     @Injected(\.sdkInitializer) private static var sdkInitializer
+
+    /// The version of the Core SDK.
+    public static let sdkVersion = "1.0.0"
 
     /// Publisher-provided metadata.
     public static let publisherMetadata = PublisherMetadata()
 
     /// The environment that contains information intended solely for advertising purposes.
-    public static let advertisingEnvironment: AdvertisingEnvironment = Environment(purpose: .advertising)
+    public static var advertisingEnvironment: AdvertisingEnvironment {
+        sharedAdvertisingEnvironment
+    }
 
     /// The environment that contains information intended solely for analytics purposes.
-    public static let analyticsEnvironment: AnalyticsEnvironment = Environment(purpose: .analytics)
+    public static var analyticsEnvironment: AnalyticsEnvironment {
+        sharedAnalyticsEnvironment
+    }
 
     /// The environment that contains information intended solely for attribution purposes.
-    public static let attributionEnvironment: AttributionEnvironment = Environment(purpose: .attribution)
+    public static var attributionEnvironment: AttributionEnvironment {
+        sharedAttributionEnvironment
+    }
 
     /// The CMP in charge of handling user consent.
     public static var consent: ConsentManagementPlatform {
@@ -37,67 +48,45 @@ public final class ChartboostCore: NSObject {
     /// - Fetch an app config from the Chartboost Core dashboard with all the info needed for Core and its
     /// modules to function.
     /// - Instantiate modules defined on the Charboost Core dashboard.
-    /// - Initialize all the provided modules (both the ones explicitly passed on a call to this method and
+    /// - Initialize all the provided modules (both the ones explicitly passed in `configuration` and then
     /// those defined on the dashboard, skipping duplicates).
     /// - Keep all modules successfully initialized alive by creating strong references to them.
     /// - Set a module that conforms to ``ConsentAdapter`` as the backing CMP for ``ChartboostCore/consent``,
     /// and thus enabling CMP functionalities.
     ///
     /// - parameter configuration: Initialization configuration parameters.
-    /// - parameter modules: Optional list of modules to be initialized and managed by the Core SDK.
-    /// You may skip this parameter if you rely on modules defined on Chartboost Core's dashboard.
-    /// - parameter moduleObserver: An observer to be notified whenever a Core module finishes initialization.
-    @objc(initializeSDKWithConfiguration:modules:moduleObserver:)
-    public static func initializeSDK(
-        with configuration: SDKConfiguration,
-        modules: [InitializableModule],
-        moduleObserver: InitializableModuleObserver?
-    ) {
-        sdkInitializer.initializeSDK(with: configuration, modules: modules, moduleObserver: moduleObserver)
-    }
-
-    /// Initializes the Core SDK and its modules.
-    ///
-    /// As part of initialization Core will:
-    /// - Fetch an app config from the Chartboost Core dashboard with all the info needed for Core and its
-    /// modules to function.
-    /// - Instantiate and initialize modules defined on the Charboost Core dashboard.
-    /// - Set a module that conforms to ``ConsentAdapter`` as the backing CMP for ``ChartboostCore/consent``,
-    /// and thus enabling CMP functionalities.
-    ///
-    /// - parameter configuration: Initialization configuration parameters.
     /// - parameter moduleObserver: An observer to be notified whenever a Core module finishes initialization.
     @objc(initializeSDKWithConfiguration:moduleObserver:)
-    public static func initializeSDK(
-        with configuration: SDKConfiguration,
-        moduleObserver: InitializableModuleObserver?
-    ) {
-        sdkInitializer.initializeSDK(with: configuration, modules: [], moduleObserver: moduleObserver)
-    }
-
-    /// The version of the Core SDK.
-    public static var sdkVersion: String {
-        "0.4.0" // this is replaced by our scripts when generating a new release branch, together with the podspec version
+    public static func initializeSDK(configuration: SDKConfiguration, moduleObserver: ModuleObserver?) {
+        sdkInitializer.initializeSDK(configuration: configuration, moduleObserver: moduleObserver)
     }
 
     /// The Chartboost Core console log level.
     ///
     /// Defaults to ``LogLevel/info``.
     public static var logLevel: LogLevel {
-        get { Logger.consoleLogHandler.logLevel }
-        set { Logger.consoleLogHandler.logLevel = newValue }
+        get { ConsoleLogHandler.core.logLevel }
+        set { ConsoleLogHandler.core.logLevel = newValue }
     }
 
     /// Attach a custom logger handler to the logging system.
     /// - Parameter handler: A custom class that conforms to the ``LogHandler`` protocol.
     public static func attachLogHandler(_ handler: LogHandler) {
-        Logger.attachHandler(handler)
+        logger.attachHandler(handler)
     }
 
     /// Detach a custom logger handler from the logging system.
     /// - Parameter handler: A custom class that conforms to the ``LogHandler`` protocol.
     public static func detachLogHandler(_ handler: LogHandler) {
-        Logger.detachHandler(handler)
+        logger.detachHandler(handler)
+    }
+
+    /// The factory intended to instantiate non-native (e.g. Unity) remote modules during initialization.
+    /// It should only be set by the framework wrapper (e.g. Core Unity wrapper) using reflection.
+    /// Private to prevent others from setting it.
+    @objc private static var nonNativeModuleFactory: ModuleFactory? {
+        get { moduleFactory.nonNativeModuleFactory }
+        set { moduleFactory.nonNativeModuleFactory = newValue }
     }
 
     // Make NSObject init private to prevent users from instantiating this class.

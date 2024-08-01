@@ -1,19 +1,18 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
 @testable import ChartboostCoreSDK
 
-class ConsentManagementPlatformMock: ConsentManagementPlatform & ConsentAdapterProxy {
-
+class ConsentManagementPlatformMock: ConsentManagementPlatform, ConsentAdapterProxy {
     // MARK: - Call Counts and Return Values
 
     var grantConsentStatusCallCount = 0
-    var grantConsentStatusSourceLastValue: ConsentStatusSource?
+    var grantConsentSourceLastValue: ConsentSource?
     var grantConsentStatusLastCompletion: ((Bool) -> Void)?
     var denyConsentStatusCallCount = 0
-    var denyConsentStatusSourceLastValue: ConsentStatusSource?
+    var denyConsentSourceLastValue: ConsentSource?
     var denyConsentStatusLastCompletion: ((Bool) -> Void)?
     var resetConsentStatusCallCount = 0
     var resetConsentStatusLastCompletion: ((Bool) -> Void)?
@@ -22,32 +21,22 @@ class ConsentManagementPlatformMock: ConsentManagementPlatform & ConsentAdapterP
     var showConsentDialogViewControllerLastValue: UIViewController?
     var showConsentDialogLastCompletion: ((Bool) -> Void)?
     var observers: [ConsentObserver] = []
-    var consentStatusValue: ConsentStatus = .granted
-    var partnerConsentStatusValue: [String: NSNumber] = [:]
 
     // MARK: - ConsentManagementPlatform
 
     var shouldCollectConsent = false
 
-    var consentStatus: ConsentStatus {
-        consentStatusValue
-    }
+    var consents: [ConsentKey: ConsentValue] = [:]
 
-    var objc_partnerConsentStatus: [String : NSNumber] {
-        partnerConsentStatusValue
-    }
-
-    var consents: [ConsentStandard: ConsentValue] = [:]
-
-    func grantConsent(source: ConsentStatusSource, completion: @escaping (_ succeeded: Bool) -> Void) {
+    func grantConsent(source: ConsentSource, completion: @escaping (_ succeeded: Bool) -> Void) {
         grantConsentStatusCallCount += 1
-        grantConsentStatusSourceLastValue = source
+        grantConsentSourceLastValue = source
         grantConsentStatusLastCompletion = completion
     }
 
-    func denyConsent(source: ConsentStatusSource, completion: @escaping (_ succeeded: Bool) -> Void) {
+    func denyConsent(source: ConsentSource, completion: @escaping (_ succeeded: Bool) -> Void) {
         denyConsentStatusCallCount += 1
-        denyConsentStatusSourceLastValue = source
+        denyConsentSourceLastValue = source
         denyConsentStatusLastCompletion = completion
     }
 
@@ -56,7 +45,11 @@ class ConsentManagementPlatformMock: ConsentManagementPlatform & ConsentAdapterP
         resetConsentStatusLastCompletion = completion
     }
 
-    func showConsentDialog(_ type: ConsentDialogType, from viewController: UIViewController, completion: @escaping (_ succeeded: Bool) -> Void) {
+    func showConsentDialog(
+        _ type: ConsentDialogType,
+        from viewController: UIViewController,
+        completion: @escaping (_ succeeded: Bool) -> Void
+    ) {
         showConsentDialogCallCount += 1
         showConsentDialogTypeLastValue = type
         showConsentDialogViewControllerLastValue = viewController

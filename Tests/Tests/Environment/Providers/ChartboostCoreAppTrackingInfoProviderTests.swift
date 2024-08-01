@@ -1,13 +1,12 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class ChartboostCoreAppTrackingInfoProviderTests: ChartboostCoreTestCase {
-
     let provider = ChartboostCoreAppTrackingInfoProvider()
 
     /// Validates that all the provider properties can be accessed without crashing or warnings.

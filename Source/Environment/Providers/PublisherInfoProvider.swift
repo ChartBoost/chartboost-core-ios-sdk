@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,7 +7,6 @@ import Foundation
 
 /// Provides information related to the publisher.
 protocol PublisherInfoProvider: AnyObject {
-
     /// The version of the app.
     var appVersion: String? { get }
 
@@ -35,13 +34,12 @@ protocol PublisherInfoProvider: AnyObject {
 
 /// Core's concrete implementation of ``PublisherInfoProvider``.
 final class ChartboostCorePublisherInfoProvider: PublisherInfoProvider {
-
     @Injected(\.infoPlist) private var infoPlist
 
     var appVersion: String? {
         infoPlist.appVersion
     }
-    
+
     var bundleID: String? {
         Bundle.main.bundleIdentifier
     }

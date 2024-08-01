@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,7 +7,6 @@ import Foundation
 
 /// A HTTP request.
 protocol HTTPRequest: CustomStringConvertible {
-
     /// The request body type. It might be a Codable model, just Data, or something else.
     associatedtype Body
 
@@ -34,7 +33,6 @@ protocol HTTPRequest: CustomStringConvertible {
 }
 
 extension HTTPRequest {
-
     var description: String {
         "\(method): \((try? url)?.absoluteString ?? "bad URL")"
     }

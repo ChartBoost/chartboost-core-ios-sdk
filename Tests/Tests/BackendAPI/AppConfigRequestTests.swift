@@ -1,13 +1,12 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class AppConfigRequestTests: ChartboostCoreTestCase {
-
     /// Validates that the config request can be encoded and the JSON output is as expected.
     func testRequestEncodingToJSON() throws {
         // Create request
@@ -115,53 +114,67 @@ class AppConfigRequestTests: ChartboostCoreTestCase {
         // Define a full JSON response
         let jsonResponse = """
 {
-  "coreInitializationDelayBaseMs" : 20,
-  "isChildDirected" : true,
-  "coreInitializationDelayMaxMs" : 320,
-  "coreInitializationRetryCountMax" : 4,
-  "moduleInitializationDelayMaxMs" : 93,
-  "moduleInitializationRetryCountMax" : 77,
-  "moduleInitializationDelayBaseMs" : 322,
-  "modules" : [
-    {
-      "className" : "module 1 name",
-      "config" : {
-        "params" : {
-          "param1:" : "value1",
-          "param2" : 23
+  "ios": {
+    "consentUpdateBatchDelayMs" : 42,
+    "coreInitializationDelayBaseMs" : 20,
+    "coreInitializationDelayMaxMs" : 320,
+    "coreInitializationRetryCountMax" : 4,
+    "logLevel": "debug",
+    "moduleInitializationDelayMaxMs" : 93,
+    "moduleInitializationRetryCountMax" : 77,
+    "moduleInitializationDelayBaseMs" : 322,
+    "modules" : [
+      {
+        "className" : "module 1 name",
+        "config" : {
+          "params" : {
+            "param1:" : "value1",
+            "param2" : 23
+
+          },
+          "version" : "module 1 version"
 
         },
-        "version" : "module 1 version"
+        "id" : "module 1 id"
 
       },
-      "id" : "module 1 id"
+      {
+        "nonNativeClassName" : "module 2 name",
+        "config" : {
+          "params" : {
+            "param3:" : "value3",
+            "param4" : 42
 
-    },
-    {
-      "className" : "module 2 name",
-      "config" : {
-        "params" : {
-          "param3:" : "value3",
-          "param4" : 42
+          },
+          "version" : "module 2 version"
 
         },
-        "version" : "module 2 version"
+        "id" : "module 2 id"
 
-      },
-      "id" : "module 2 id"
-
-    }
-  ],
-  "schemaVersion" : "some schema version"
+      }
+    ],
+    "schemaVersion" : "some schema version"
+  },
+  "android": {
+    "consentUpdateBatchDelayMs" : 111,
+    "coreInitializationDelayBaseMs" : 111,
+    "isChildDirected" : false,
+    "coreInitializationDelayMaxMs" : 111,
+    "coreInitializationRetryCountMax" : 111,
+    "moduleInitializationDelayMaxMs" : 111,
+    "moduleInitializationRetryCountMax" : 111,
+    "moduleInitializationDelayBaseMs" : 111,
+  }
 }
 """
 
         // Define the expected response model
-        let expectedResponseModel = AppConfigRequest.ResponseBody(
-            isChildDirected: true,
+        let expectedResponseModel = AppConfigRequest.ResponseBody(ios: .init(
+            consentUpdateBatchDelayMs: 42,
             coreInitializationDelayBaseMs: 20,
             coreInitializationDelayMaxMs: 320,
             coreInitializationRetryCountMax: 4,
+            logLevel: "debug",
             moduleInitializationDelayBaseMs: 322,
             moduleInitializationDelayMaxMs: 93,
             moduleInitializationRetryCountMax: 77,
@@ -169,6 +182,7 @@ class AppConfigRequestTests: ChartboostCoreTestCase {
             modules: [
                 .init(
                     className: "module 1 name",
+                    nonNativeClassName: nil,
                     config: .init(
                         version: "module 1 version",
                         params: .init(value: ["param1:": "value1", "param2": 23])
@@ -176,14 +190,16 @@ class AppConfigRequestTests: ChartboostCoreTestCase {
                     id: "module 1 id"
                 ),
                 .init(
-                    className: "module 2 name",
+                    className: nil,
+                    nonNativeClassName: "module 2 name",
                     config: .init(
                         version: "module 2 version",
                         params: .init(value: ["param3:": "value3", "param4": 42])
                     ),
                     id: "module 2 id"
-                )
-        ])
+                ),
+            ]
+        ))
 
         // Decode the response model from the string
         let jsonData = try XCTUnwrap(jsonResponse.data(using: .utf8))
@@ -201,17 +217,36 @@ class AppConfigRequestTests: ChartboostCoreTestCase {
         let jsonResponse = "{}"
 
         // Define the expected response model
-        let expectedResponseModel = AppConfigRequest.ResponseBody(
-            isChildDirected: nil,
+        let expectedResponseModel = AppConfigRequest.ResponseBody(ios: nil)
+
+        // Decode the response model from the string
+        let jsonData = try XCTUnwrap(jsonResponse.data(using: .utf8))
+        let decoder = JSONDecoder()
+        let decodedModel = try decoder.decode(AppConfigRequest.ResponseBody.self, from: jsonData)
+
+        // Check that the generated model has the expected properties
+        XCTAssertEqual(decodedModel, expectedResponseModel)
+    }
+
+    /// Validates that the config response can be decoded from an JSON response that contains an empty
+    /// "ios" container.
+    func testResponseDecodingFromEmptyIOSContainer() throws {
+        // Define a JSON response with an empty ios container
+        let jsonResponse = "{ \"ios\": {} }"
+
+        // Define the expected response model
+        let expectedResponseModel = AppConfigRequest.ResponseBody(ios: .init(
+            consentUpdateBatchDelayMs: nil,
             coreInitializationDelayBaseMs: nil,
             coreInitializationDelayMaxMs: nil,
             coreInitializationRetryCountMax: nil,
+            logLevel: nil,
             moduleInitializationDelayBaseMs: nil,
             moduleInitializationDelayMaxMs: nil,
             moduleInitializationRetryCountMax: nil,
             schemaVersion: nil,
             modules: nil
-        )
+        ))
         // Decode the response model from the string
         let jsonData = try XCTUnwrap(jsonResponse.data(using: .utf8))
         let decoder = JSONDecoder()

@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -8,7 +8,6 @@ import XCTest
 
 /// A XCTestCase subclass that replaces the shared dependencies container by a mock.
 class ChartboostCoreTestCase: XCTestCase {
-
     private let dependenciesContainer = DependenciesContainerMock()
 
     /// Mocks used for dependency injection in all test classes.
@@ -16,7 +15,8 @@ class ChartboostCoreTestCase: XCTestCase {
     var mocks: MocksContainer { dependenciesContainer.mocks }
 
     override func setUp() {
-        // Replace the shared dependencies container, so when a ChartboostCore SDK class is created in order to test it all its @Injected properties are assigned to mock values.
+        // Replace the shared dependencies container, so when a ChartboostCore SDK class is created in order to 
+        // test it all its @Injected properties are assigned to mock values.
         DependenciesContainerStore.container = dependenciesContainer
     }
 

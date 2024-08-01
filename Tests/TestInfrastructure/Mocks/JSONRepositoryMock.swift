@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -6,7 +6,6 @@
 @testable import ChartboostCoreSDK
 
 final class JSONRepositoryMock: JSONRepository {
-
     // MARK: - Call Counts and Return Values
 
     var readCallCount = 0
@@ -28,6 +27,7 @@ final class JSONRepositoryMock: JSONRepository {
 
     // MARK: - JSONRepository
 
+    // swiftlint:disable force_cast
     func read<Value: Decodable>(_ type: Value.Type, name: String) throws -> Value {
         readCallCount += 1
         readTypeLastValue = type
@@ -38,6 +38,7 @@ final class JSONRepositoryMock: JSONRepository {
             return readReturnValue as! Value
         }
     }
+    // swiftlint:enable force_cast
 
     func write<Value: Codable>(_ value: Value, name: String) throws {
         writeCallCount += 1

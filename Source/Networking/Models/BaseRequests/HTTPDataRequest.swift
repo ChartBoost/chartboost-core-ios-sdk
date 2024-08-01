@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -11,6 +11,5 @@ protocol HTTPDataRequest:
 where Body == Data,
       ResponseBody == Data,
       RequestBuilder == DataURLRequestBuilder<Self>,
-      ResponseBodyParser == DataURLResponseBodyParser<Self>
-{
+      ResponseBodyParser == DataURLResponseBodyParser<Self> {
 }

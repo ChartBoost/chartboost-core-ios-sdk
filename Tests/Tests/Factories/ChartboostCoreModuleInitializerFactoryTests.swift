@@ -1,18 +1,17 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class ChartboostCoreModuleInitializerFactoryTests: ChartboostCoreTestCase {
-
     let factory = ChartboostCoreModuleInitializerFactory()
 
     /// Validates that a call to `makeModuleInitializer()` returns an initializer with proper values.
     func testMakeModuleInitializer() {
-        let module = InitializableModuleMock()
+        let module = ModuleMock()
 
         let initializer = factory.makeModuleInitializer(module: module)
 

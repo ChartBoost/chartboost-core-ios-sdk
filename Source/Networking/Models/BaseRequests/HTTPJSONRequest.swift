@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -13,8 +13,7 @@ protocol HTTPJSONRequest:
 where Body: Encodable,
       ResponseBody: Decodable,
       ResponseBodyParser == JSONURLResponseBodyParser<Self>,
-      RequestBuilder == JSONURLRequestBuilder<Self>
-{
+      RequestBuilder == JSONURLRequestBuilder<Self> {
     /// The key encoding strategy to be used when encoding the body to JSON.
     var bodyKeyEncodingStrategy: JSONEncoder.KeyEncodingStrategy { get }
 

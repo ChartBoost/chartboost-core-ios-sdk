@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -8,14 +8,13 @@ import SystemConfiguration
 
 /// Provides information related to the current network status.
 protocol NetworkStatusProvider {
-
     /// The current network status.
     var status: NetworkStatus { get }
+    func startNotifier()
 }
 
 /// Core's concrete implementation of ``NetworkStatusProvider``.
 final class ChartboostCoreNetworkStatusProvider: NetworkStatusProvider {
-
     private let networkReachability: SCNetworkReachability? = {
         var zeroAddress = sockaddr_in()
         zeroAddress.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
@@ -36,7 +35,7 @@ final class ChartboostCoreNetworkStatusProvider: NetworkStatusProvider {
     private var notifierIsRunning = false
 
     private let reachabilityCallback: SCNetworkReachabilityCallBack = { _, flags, info in
-        guard let info = info else { return }
+        guard let info else { return }
         let weakReachability = Unmanaged<WeakReachability>.fromOpaque(info).takeUnretainedValue()
         weakReachability.reachability?.flags = flags
     }
@@ -45,11 +44,10 @@ final class ChartboostCoreNetworkStatusProvider: NetworkStatusProvider {
 
     init() {
         updateFlags()
-        startNotifier()
     }
 
     var status: NetworkStatus {
-       guard let flags = flags else {
+       guard let flags else {
            return .notReachable
        }
        var status: NetworkStatus = .unknown
@@ -71,10 +69,9 @@ final class ChartboostCoreNetworkStatusProvider: NetworkStatusProvider {
        return status
     }
 
-    @discardableResult
-    private func startNotifier() -> Bool {
-        guard !notifierIsRunning, let networkReachability = networkReachability else {
-            return false
+    func startNotifier() {
+        guard !notifierIsRunning, let networkReachability else {
+            return
         }
 
         logger.debug("Starting reachability notifier...")
@@ -103,22 +100,22 @@ final class ChartboostCoreNetworkStatusProvider: NetworkStatusProvider {
         )
         guard SCNetworkReachabilitySetCallback(networkReachability, reachabilityCallback, &context) else {
             stopNotifier()
-            return false
+            return
         }
         guard SCNetworkReachabilitySetDispatchQueue(networkReachability, queue) else {
             stopNotifier()
-            return false
+            return
         }
 
         notifierIsRunning = true
         logger.debug("Started reachability notifier")
 
-        return true
+        return
     }
 
     private func stopNotifier() {
         defer { notifierIsRunning = false }
-        guard let networkReachability = networkReachability else {
+        guard let networkReachability else {
             return
         }
 
@@ -129,7 +126,7 @@ final class ChartboostCoreNetworkStatusProvider: NetworkStatusProvider {
     }
 
     private func updateFlags() {
-        guard let networkReachability = networkReachability else {
+        guard let networkReachability else {
             return
         }
         queue.sync {

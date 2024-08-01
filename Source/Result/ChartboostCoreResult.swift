@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -9,7 +9,6 @@ import Foundation
 @objc(CBCResult)
 @objcMembers
 public class ChartboostCoreResult: NSObject {
-
     /// The start date of the operation.
     public let startDate: Date
 

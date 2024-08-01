@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -10,7 +10,6 @@ import Foundation
 /// to match the definitions on the Android platform.
 @objc(CBCVendorIDScope)
 public enum VendorIDScope: Int {
-
     /// Unknown scope.
     case unknown
 
@@ -19,9 +18,10 @@ public enum VendorIDScope: Int {
 
     /// Developer scope.
     case developer
+}
 
-    /// String representation of the scope.
-    var description: String {
+extension VendorIDScope: CustomStringConvertible {
+    public var description: String {
         switch self {
         case .unknown: return "unknown"
         case .application: return "application"

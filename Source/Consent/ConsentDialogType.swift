@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -8,7 +8,6 @@ import Foundation
 /// The type of consent dialog to be presented to the user.
 @objc(CBCConsentDialogType)
 public enum ConsentDialogType: Int, CustomStringConvertible {
-    
     /// A non-intrusive dialog used to collect consent, presenting a minimum amount of information.
     case concise
 

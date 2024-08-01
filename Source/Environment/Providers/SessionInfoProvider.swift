@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,7 +7,6 @@ import WebKit
 
 /// Provides information related to the session.
 protocol SessionInfoProvider {
-
     /// The current session, or `nil` if a session has not started yet.
     var session: AppSession? { get }
 
@@ -17,7 +16,6 @@ protocol SessionInfoProvider {
 
 /// Core's concrete implementation of ``SessionInfoProvider``.
 final class ChartboostCoreSessionInfoProvider: SessionInfoProvider {
-
     @Atomic private(set) var session: AppSession?
 
     func reset() {
@@ -26,4 +24,3 @@ final class ChartboostCoreSessionInfoProvider: SessionInfoProvider {
         session = AppSession()
     }
 }
-

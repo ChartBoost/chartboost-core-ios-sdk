@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,7 +7,6 @@ import Foundation
 
 /// A builder that knows how to make URL requests from another request model (e.g. a HTTPRequest).
 protocol URLRequestBuilder {
-
     /// The associated request type.
     associatedtype Request
 
@@ -17,7 +16,6 @@ protocol URLRequestBuilder {
 
 // Convenience extension
 extension URLRequestBuilder where Request: HTTPRequest {
-
     /// Creates a URL request with the info provided by a HTTPRequest.
     /// This is a base method intended to be used by types conforming to URLRequestBuilder which should provide
     /// the extra info specific to the type of HTTPRequest they deal with.

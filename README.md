@@ -4,13 +4,15 @@
 
 ## Overview
 
-The Chartboost Core SDK serves as an entry point and foundation on which modules for your iOS app can be built.
-This includes both Chartboost modules, 3rd party module, and your own custom modules.
+The Chartboost Core iOS SDK is designed as an entry point to manage and facilitate different modules for your iOS application/game. Each module can be individually initialized with metrics collected and reported to offer detailed insights into the module’s performance and potential issues.
 
-Chartboost Core main functionalities are:
-- Module initialization management.
-- User consent management.
-- Streamlined mechanism to access environment and publisher information following a data-minimization design.
+The main functionalities provided by the SDK are:
+
+1. Initialization of individual or a set of modules.
+2. Performance metrics collection during the module initialization process.
+3. Detailed error tracking and reporting with categorized error codes.
+4. Centralized logging system with multiple log levels and output options.
+
 
 ## Documentation
 

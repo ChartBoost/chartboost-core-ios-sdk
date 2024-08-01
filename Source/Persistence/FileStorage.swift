@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,7 +7,6 @@ import Foundation
 
 /// Provides file system read and write capabilities.
 protocol FileStorage {
-
     // MARK: URLs
 
     func systemDirectoryURL(_ type: FileManager.SearchPathDirectory) throws -> URL
@@ -40,7 +39,6 @@ protocol FileStorage {
 
 /// A `FileStorage` implementation that uses the file system to access and modify files.
 struct ChartboostCoreFileStorage: FileStorage {
-
     private let fileManager = FileManager.default
 
     func systemDirectoryURL(_ type: FileManager.SearchPathDirectory) throws -> URL {

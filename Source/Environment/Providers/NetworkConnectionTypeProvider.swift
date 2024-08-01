@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -8,14 +8,12 @@ import Foundation
 
 /// Provides information related to the current network connection.
 protocol NetworkConnectionTypeProvider {
-
     /// The current network connection type, e.g. `wifi`.
     var connectionType: NetworkConnectionType { get }
 }
 
 /// Core's concrete implementation of ``NetworkConnectionTypeProvider``.
 struct ChartboostCoreNetworkConnectionTypeProvider: NetworkConnectionTypeProvider {
-
     /// This is `static` to make sure it's only instantiated once, since this class may cause crashes
     /// if deallocated due to a known Apple bug.
     private static let networkInfo = CTTelephonyNetworkInfo()
@@ -32,7 +30,7 @@ struct ChartboostCoreNetworkConnectionTypeProvider: NetworkConnectionTypeProvide
 
         case .reachableViaWWAN:
             // https://developer.apple.com/documentation/coretelephony/cttelephonynetworkinfo/radio_access_technology_constants
-            let currentRadioAccessTechnology = Self.networkInfo.currentRadioAccessTechnology
+            let currentRadioAccessTechnology = Self.networkInfo.serviceCurrentRadioAccessTechnology?.values.first
 
             switch currentRadioAccessTechnology {
             case CTRadioAccessTechnologyLTE:

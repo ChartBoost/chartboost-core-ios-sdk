@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -6,10 +6,11 @@
 @testable import ChartboostCoreSDK
 
 final class DependenciesContainerMock: DependenciesContainer {
-    
     let mocks = MocksContainer()
 
+    var advertisingEnvironment: AdvertisingEnvironment { mocks.environment }
     var analyticsEnvironment: AnalyticsEnvironment { mocks.environment }
+    var attributionEnvironment: AttributionEnvironment { mocks.environment }
     var appConfig: AppConfig { mocks.appConfig }
     var appConfigFactory: AppConfigFactory { mocks.appConfigFactory }
     var appConfigRepository: AppConfigRepository { mocks.appConfigRepository }
@@ -17,10 +18,11 @@ final class DependenciesContainerMock: DependenciesContainer {
     var appTrackingInfoProvider: AppTrackingInfoProvider { mocks.appTrackingInfoProvider }
     var consentManager: ConsentAdapterProxy & ConsentManagementPlatform { mocks.consentManager }
     var deviceInfoProvider: DeviceInfoProvider { mocks.deviceInfoProvider }
+    var environmentChangePublisher: EnvironmentChangePublisher { mocks.environmentChangePublisher }
     var fileStorage: FileStorage { mocks.fileStorage }
     var infoPlist: InfoPlist { mocks.infoPlist }
     var jsonRepository: JSONRepository { mocks.jsonRepository }
-    var moduleFactory: InitializableModuleFactory { mocks.moduleFactory }
+    var moduleFactory: UniversalModuleFactory { mocks.moduleFactory }
     var moduleInitializerFactory: ModuleInitializerFactory { mocks.moduleInitializerFactory }
     var networkConnectionTypeProvider: NetworkConnectionTypeProvider { mocks.networkConnectionTypeProvider }
     var networkManager: NetworkManager { mocks.networkManager }

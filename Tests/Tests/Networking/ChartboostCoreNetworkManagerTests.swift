@@ -1,13 +1,12 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class ChartboostCoreNetworkManagerTests: ChartboostCoreTestCase {
-
     private static let urlSessionConfig: URLSessionConfiguration = {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [URLProtocolMock.self]
@@ -22,12 +21,17 @@ class ChartboostCoreNetworkManagerTests: ChartboostCoreTestCase {
     }
 
     /// Validates that a call to `send()` completes with success if the data task succeeds
-    func testSendRequestWithSuccess() {
+    func testSendRequestWithSuccess() throws {
         let request = HTTPDataRequestMock()
 
         // Expected values
         let responseData = "some response".data(using: .utf8)
-        let urlResponse = HTTPURLResponse(url: request.url, statusCode: 200, httpVersion: nil, headerFields: ["param": "value"])!
+        let urlResponse = try XCTUnwrap(HTTPURLResponse(
+            url: request.url,
+            statusCode: 200,
+            httpVersion: nil,
+            headerFields: ["param": "value"]
+        ))
 
         // Send the request
         let expectation = self.expectation(description: "wait for http response")
@@ -88,12 +92,17 @@ class ChartboostCoreNetworkManagerTests: ChartboostCoreTestCase {
     }
 
     /// Validates that a call to `send()` completes with failure if response status code is a 500.
-    func testSendRequestWith500Response() {
+    func testSendRequestWith500Response() throws {
         let request = HTTPDataRequestMock()
 
         // Expected values
         let responseData = "some response".data(using: .utf8)
-        let urlResponse = HTTPURLResponse(url: request.url, statusCode: 500, httpVersion: nil, headerFields: ["param": "value"])!
+        let urlResponse = try XCTUnwrap(HTTPURLResponse(
+            url: request.url,
+            statusCode: 500,
+            httpVersion: nil,
+            headerFields: ["param": "value"]
+        ))
 
         // Send the request
         let expectation = self.expectation(description: "wait for http response")
@@ -109,7 +118,10 @@ class ChartboostCoreNetworkManagerTests: ChartboostCoreTestCase {
             case .success:
                 XCTFail("Response should be a failure")
             case .failure(let error):
-                XCTAssertEqual(error as? ChartboostCoreNetworkManager.NetworkError, ChartboostCoreNetworkManager.NetworkError.nonSuccessfulStatusCode(urlResponse.statusCode))
+                XCTAssertEqual(
+                    error as? ChartboostCoreNetworkManager.NetworkError,
+                    ChartboostCoreNetworkManager.NetworkError.nonSuccessfulStatusCode(urlResponse.statusCode)
+                )
             }
             expectation.fulfill()
         }
@@ -157,12 +169,17 @@ class ChartboostCoreNetworkManagerTests: ChartboostCoreTestCase {
     }
 
     /// Validates that a call to `send()` completes with failure if the response cannot be parsed.
-    func testSendRequestWithInvalidResponse() {
+    func testSendRequestWithInvalidResponse() throws {
         // Expected values
         let expectedError = NSError(domain: "parse response body error", code: 42)
         let request = InvalidHTTPRequestMock(makeURLRequestError: nil, parseResponseBodyError: expectedError)
         let responseData = "some response".data(using: .utf8)
-        let urlResponse = HTTPURLResponse(url: request.url, statusCode: 200, httpVersion: nil, headerFields: ["param": "value"])!
+        let urlResponse = try XCTUnwrap(HTTPURLResponse(
+            url: request.url,
+            statusCode: 200,
+            httpVersion: nil,
+            headerFields: ["param": "value"]
+        ))
 
         // Send the request
         let expectation = self.expectation(description: "wait for http response")
@@ -190,15 +207,19 @@ class ChartboostCoreNetworkManagerTests: ChartboostCoreTestCase {
         XCTAssertEqual(URLProtocolMock.dataTaskCallCount, 1)
         XCTAssertEqual(URLProtocolMock.dataTaskURLRequestLastValue?.url, request.url)
         XCTAssertEqual(URLProtocolMock.dataTaskURLRequestLastValue?.httpMethod, request.method.description)
-
     }
 
     /// Validates that a call to `send()` completes with success if the response contains no data.
-    func testSendRequestWithNoResponseData() {
+    func testSendRequestWithNoResponseData() throws {
         let request = HTTPDataRequestMock()
 
         // Expected values
-        let urlResponse = HTTPURLResponse(url: request.url, statusCode: 204, httpVersion: nil, headerFields: ["param": "value"])!
+        let urlResponse = try XCTUnwrap(HTTPURLResponse(
+            url: request.url,
+            statusCode: 204,
+            httpVersion: nil,
+            headerFields: ["param": "value"]
+        ))
 
         // Send the request
         let expectation = self.expectation(description: "wait for http response")
@@ -212,7 +233,11 @@ class ChartboostCoreNetworkManagerTests: ChartboostCoreTestCase {
             XCTAssertEqual(response.headers as? [String: String], urlResponse.allHeaderFields as? [String: String])
             switch response.result {
             case .success(let data):
-                XCTAssert(data?.count == 0)
+                if let data {
+                    XCTAssert(data.isEmpty)
+                } else {
+                    XCTFail("Response data should be empty but not nil")
+                }
             case .failure:
                 XCTFail("Response should have succeeded")
             }

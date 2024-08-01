@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,7 +7,6 @@ import Foundation
 
 /// Manages HTTP requests and responses, acting as a wrapper over URLSession.
 protocol NetworkManager {
-
     /// Sends an HTTP request.
     /// - parameter request: The request to send.
     /// - parameter completion: The completion handler to be executed when the network operation is done.
@@ -21,7 +20,6 @@ protocol NetworkManager {
 
 /// Core's concrete implementation of ``NetworkManager``.
 final class ChartboostCoreNetworkManager: NSObject, NetworkManager, URLSessionDelegate {
-
     enum NetworkError: Error, CustomStringConvertible, Equatable {
         case notHTTPURLResponse
         case nonSuccessfulStatusCode(Int)
@@ -60,7 +58,6 @@ final class ChartboostCoreNetworkManager: NSObject, NetworkManager, URLSessionDe
 // MARK: - NetworkManager
 
 extension ChartboostCoreNetworkManager {
-
     func send<Request: HTTPRequest>(
         _ request: Request,
         completion: @escaping (HTTPResponse<Request.ResponseBody>) -> Void
@@ -107,7 +104,7 @@ extension ChartboostCoreNetworkManager {
             // Parse response data
             let responseBodyResult = Result<Request.ResponseBody?, Error> {
                 if let data {
-                    logger.trace("Response data: \(String(data: data, encoding: .utf8) ?? "<error>")")
+                    logger.verbose("Response data: \(String(data: data, encoding: .utf8) ?? "<error>")")
                     return try Request.ResponseBodyParser.parse(data, for: request)
                 } else {
                     return nil

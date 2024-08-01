@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -6,9 +6,8 @@
 @testable import ChartboostCoreSDK
 
 final class ModuleInitializerFactoryMock: ModuleInitializerFactory {
-
     var makeModuleInitializerCallCount = 0
-    var makeModuleInitializerModuleAllValues: [InitializableModule] = []
+    var makeModuleInitializerModuleAllValues: [Module] = []
     var makeModuleInitializerReturnValues: [ModuleInitializerMock] = []
 
     func reset() {
@@ -17,7 +16,7 @@ final class ModuleInitializerFactoryMock: ModuleInitializerFactory {
         makeModuleInitializerReturnValues = []
     }
 
-    func makeModuleInitializer(module: InitializableModule) -> ModuleInitializer {
+    func makeModuleInitializer(module: Module) -> ModuleInitializer {
         makeModuleInitializerCallCount += 1
         makeModuleInitializerModuleAllValues.append(module)
         let returnValue = ModuleInitializerMock()

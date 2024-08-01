@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -6,37 +6,24 @@
 @testable import ChartboostCoreSDK
 
 class ConsentObserverMock: ConsentObserver {
-
     // MARK: - Call Counts and Return Values
 
     var onConsentModuleReadyCallCount = 0
-    var onConsentStatusChangeCallCount = 0
-    var onConsentStatusChangeLastValue: ConsentStatus?
-    var onPartnerConsentStatusChangeCallCount = 0
-    var onPartnerConsentStatusChangeLastValue: (partnerID: String, status: ConsentStatus)?
+    var onConsentModuleReadyInitialConsentsLastValue: [ConsentKey: ConsentValue]?
     var onConsentChangeCallCount = 0
-    var onConsentChangeConsentStandardLastValue: ConsentStandard?
-    var onConsentChangeConsentValueLastValue: ConsentValue?
+    var onConsentChangeModifiedKeysLastValue: Set<ConsentKey>?
+    var onConsentChangeFullConsentsLastValue: [ConsentKey: ConsentValue]?
 
     // MARK: - ConsentObserver
 
-    func onConsentModuleReady() {
+    func onConsentModuleReady(initialConsents: [ConsentKey: ConsentValue]) {
         onConsentModuleReadyCallCount += 1
+        onConsentModuleReadyInitialConsentsLastValue = initialConsents
     }
 
-    func onConsentStatusChange(_ status: ConsentStatus) {
-        onConsentStatusChangeCallCount += 1
-        onConsentStatusChangeLastValue = status
-    }
-
-    func onPartnerConsentStatusChange(partnerID: String, status: ConsentStatus) {
-        onPartnerConsentStatusChangeCallCount += 1
-        onPartnerConsentStatusChangeLastValue = (partnerID, status)
-    }
-
-    func onConsentChange(standard: ConsentStandard, value: ConsentValue?) {
+    func onConsentChange(fullConsents: [ConsentKey: ConsentValue], modifiedKeys: Set<ConsentKey>) {
         onConsentChangeCallCount += 1
-        onConsentChangeConsentStandardLastValue = standard
-        onConsentChangeConsentValueLastValue = value
+        onConsentChangeModifiedKeysLastValue = modifiedKeys
+        onConsentChangeFullConsentsLastValue = fullConsents
     }
 }

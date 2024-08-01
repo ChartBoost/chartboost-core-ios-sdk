@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -8,15 +8,7 @@ import Foundation
 
 /// Core's concrete implementation of all the environment protocols.
 /// All the information is obtained from the system, the publisher, or sourced internally.
-/// - note: The ``advertisingID`` is gated for advertising and attribution purposes when the user is underage.
-final class Environment: AdvertisingEnvironment, AnalyticsEnvironment, AttributionEnvironment {
-
-    enum Purpose {
-        case advertising
-        case analytics
-        case attribution
-    }
-
+final class Environment: AdvertisingEnvironment, AnalyticsEnvironment, AttributionEnvironment, EnvironmentChangePublisher {
     @Injected(\.appTrackingInfoProvider) private var appTrackingInfoProvider
     @Injected(\.appConfig) private var appConfig
     @Injected(\.deviceInfoProvider) private var deviceInfoProvider
@@ -25,11 +17,8 @@ final class Environment: AdvertisingEnvironment, AnalyticsEnvironment, Attributi
     @Injected(\.sessionInfoProvider) private var sessionInfoProvider
     @Injected(\.userAgentProvider) private var userAgentProvider
 
-    let purpose: Purpose
-
-    init(purpose: Purpose) {
-        self.purpose = purpose
-    }
+    // List of observers added by the publisher.
+    @Atomic private var observers: [WeakWrapper<EnvironmentObserver>] = []
 
     @available(iOS 14.0, *)
     var appTrackingTransparencyStatus: ATTrackingManager.AuthorizationStatus {
@@ -53,12 +42,7 @@ final class Environment: AdvertisingEnvironment, AnalyticsEnvironment, Attributi
     }
 
     var advertisingID: String? {
-        // Gate IFA if user is underage for advertising and attribution purposes.
-        if (publisherInfoProvider.isUserUnderage || appConfig.isChildDirected == true)
-            && (purpose == .advertising || purpose == .attribution) {
-            return nil
-        }
-        return appTrackingInfoProvider.advertisingID
+        appTrackingInfoProvider.advertisingID
     }
 
     var bundleID: String? {
@@ -113,16 +97,16 @@ final class Environment: AdvertisingEnvironment, AnalyticsEnvironment, Attributi
         publisherInfoProvider.publisherSessionID
     }
 
-    var screenHeight: Double {
-        deviceInfoProvider.screenHeight
+    var screenHeightPixels: Double {
+        deviceInfoProvider.screenHeightPixels
     }
 
     var screenScale: Double {
         deviceInfoProvider.screenScale
     }
 
-    var screenWidth: Double {
-        deviceInfoProvider.screenWidth
+    var screenWidthPixels: Double {
+        deviceInfoProvider.screenWidthPixels
     }
 
     var vendorID: String? {
@@ -139,5 +123,35 @@ final class Environment: AdvertisingEnvironment, AnalyticsEnvironment, Attributi
 
     func userAgent(completion: @escaping UserAgentCompletion) {
         userAgentProvider.userAgent(completion: completion)
+    }
+
+    // MARK: - Observers
+
+    func addObserver(_ observer: EnvironmentObserver) {
+        guard !observers.contains(where: { $0.value === observer }) else {
+            logger.info("Environment observer not added: the object is already observing changes.")
+            return
+        }
+        observers.append(WeakWrapper(observer))
+    }
+
+    func removeObserver(_ observer: EnvironmentObserver) {
+        observers.removeAll(where: { $0.value === observer })
+    }
+
+    /// Iterates over all the observers in a thread-safe way, cleaning up references to any deallocated observers.
+    func publishChange(to property: ObservableEnvironmentProperty) {
+        $observers.mutate { observers in
+            // Remove wrappers for deallocated observers
+            observers.removeAll(where: { $0.value == nil })
+            // Forward callback to all observers
+            observers.forEach { observerWrapper in
+                DispatchQueue.main.async {  // on main thread in case the observer does some UI logic here
+                    if let observer = observerWrapper.value {
+                        observer.onChange(property)
+                    }
+                }
+            }
+        }
     }
 }

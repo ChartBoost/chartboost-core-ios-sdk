@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -11,31 +11,26 @@ import UIKit
 ///
 /// Note that a ``ConsentAdapter`` module must be integrated to enable Core's
 /// All methods are no-ops unless a ``ConsentAdapter`` Core module is integrated in the app and initialized.
-/// ``ConsentObserver`` objects passed on a call to ``addObserver(_:)`` will get a call to ``ConsentObserver/onConsentModuleReady()``
-/// when the ``ConsentAdapter`` is initialized and the ``ConsentManagementPlatform`` is ready to be used.
+/// ``ConsentObserver`` objects passed on a call to ``addObserver(_:)`` will get a call to 
+/// ``ConsentObserver/onConsentModuleReady(initialConsents:)`` when the ``ConsentAdapter`` is initialized
+/// and the ``ConsentManagementPlatform`` is ready to be used.
 @objc(CBCConsentManagementPlatform)
 public protocol ConsentManagementPlatform: AnyObject {
-
     /// Indicates whether the CMP has determined that consent should be collected from the user.
     /// Returns `false` if no consent adapter module is available.
     var shouldCollectConsent: Bool { get }
 
-    /// The current consent status determined by the CMP.
-    /// Returns ``ConsentStatus/unknown`` if no consent adapter module is available.
-    var consentStatus: ConsentStatus { get }
-
-    /// Individualized consent status per partner SDK, as determined by the CMP.
-    /// The keys for advertising SDKs should match Chartboost Mediation partner adapter ids.
+    /// Current user consent info as determined by the CMP.
     ///
-    /// For compatibility with Obj-C, the values are the Int representation of a ``ConsentStatus``.
-    /// You may use the more idiomatic ``partnerConsentStatus`` in Swift instead.
+    /// Consent info may include IAB strings, like TCF or GPP, and parsed boolean-like signals like "CCPA Opt In Sale"
+    /// and partner-specific signals.
+    ///
+    /// Make sure to use predefined consent key constants defined in ``ConsentKeys`` to access specific entries in
+    /// the dictionary. You may use predefined consent value constants defined in ``ConsentValues`` for comparing
+    /// values of non-IAB strings (for example ``ConsentKeys/ccpaOptIn`` and ``ConsentKeys/gdprConsentGiven``).
     ///
     /// Returns an empty dictionary if no consent adapter module is available.
-    var objc_partnerConsentStatus: [String: NSNumber] { get }
-
-    /// Detailed consent status for each consent standard, as determined by the CMP.
-    /// Returns an empty dictionary if no consent adapter module is available.
-    var consents: [ConsentStandard: ConsentValue] { get }
+    var consents: [ConsentKey: ConsentValue] { get }
 
     /// Instructs the CMP to present a consent dialog to the user for the purpose of collecting consent.
     /// - parameter type: The type of consent dialog to present. See the ``ConsentDialogType`` documentation for more info.
@@ -45,7 +40,11 @@ public protocol ConsentManagementPlatform: AnyObject {
     /// Note that this is called at the moment the dialog is presented, **not when it is dismissed**.
     ///
     /// If no consent adapter module is available this method does nothing.
-    func showConsentDialog(_ type: ConsentDialogType, from viewController: UIViewController, completion: @escaping (_ succeeded: Bool) -> Void)
+    func showConsentDialog(
+        _ type: ConsentDialogType,
+        from viewController: UIViewController,
+        completion: @escaping (_ succeeded: Bool) -> Void
+    )
 
     /// Informs the CMP that the user has granted consent.
     /// This method should be used only when a custom consent dialog is presented to the user, thereby making the publisher
@@ -53,11 +52,11 @@ public protocol ConsentManagementPlatform: AnyObject {
     /// be used instead.
     /// If the CMP does not support custom consent dialogs or the operation fails for any other reason, the completion
     /// handler is executed with a `false` parameter.
-    /// - parameter source: The source of the new consent. See the ``ConsentStatusSource`` documentation for more info.
+    /// - parameter source: The source of the new consent. See the ``ConsentSource`` documentation for more info.
     /// - parameter completion: Handler called to indicate if the operation went through successfully or not.
     ///
     /// If no consent adapter module is available this method does nothing.
-    func grantConsent(source: ConsentStatusSource, completion: @escaping (_ succeeded: Bool) -> Void)
+    func grantConsent(source: ConsentSource, completion: @escaping (_ succeeded: Bool) -> Void)
 
     /// Informs the CMP that the user has denied consent.
     /// This method should be used only when a custom consent dialog is presented to the user, thereby making the publisher
@@ -65,11 +64,11 @@ public protocol ConsentManagementPlatform: AnyObject {
     /// be used instead.
     /// If the CMP does not support custom consent dialogs or the operation fails for any other reason, the completion
     /// handler is executed with a `false` parameter.
-    /// - parameter source: The source of the new consent. See the ``ConsentStatusSource`` documentation for more info.
+    /// - parameter source: The source of the new consent. See the ``ConsentSource`` documentation for more info.
     /// - parameter completion: Handler called to indicate if the operation went through successfully or not.
     ///
     /// If no consent adapter module is available this method does nothing.
-    func denyConsent(source: ConsentStatusSource, completion: @escaping (_ succeeded: Bool) -> Void)
+    func denyConsent(source: ConsentSource, completion: @escaping (_ succeeded: Bool) -> Void)
 
     /// Informs the CMP that the given consent should be reset.
     /// If the CMP does not support the `reset()` function or the operation fails for any other reason, the completion
@@ -79,7 +78,7 @@ public protocol ConsentManagementPlatform: AnyObject {
     /// If no consent adapter module is available this method does nothing.
     func resetConsent(completion: @escaping (_ succeeded: Bool) -> Void)
 
-    /// Adds an observer to receive notifications whenever the CMP consent status changes.
+    /// Adds an observer to receive notifications whenever the CMP consent info changes.
     /// The Core SDK automatically notifies modules that conform to ``ConsentObserver`` about these changes, so there is no need
     /// to manually add Core modules as observers.
     ///
@@ -90,30 +89,16 @@ public protocol ConsentManagementPlatform: AnyObject {
     func removeObserver(_ observer: ConsentObserver)
 }
 
-extension ConsentManagementPlatform {
-
-    /// Individualized consent status per partner SDK, as determined by the CMP.
-    /// The keys for advertising SDKs should match Chartboost Mediation partner adapter ids.
-    ///
-    /// Returns an empty dictionary if no consent adapter module is available.
-    public var partnerConsentStatus: [String: ConsentStatus] {
-        objc_partnerConsentStatus.compactMapValues {
-            ConsentStatus(rawValue: $0.intValue)
-        }
-    }
-}
-
 // Convenience methods with default arguments.
-public extension ConsentManagementPlatform {
-
+extension ConsentManagementPlatform {
     /// Informs the CMP that the user has granted consent.
     /// This method should be used only when a custom consent dialog is presented to the user, thereby making the publisher
     /// responsible for the UI-side of collecting consent. In most cases ``showConsentDialog(_:from:completion:)`` should
     /// be used instead.
-    /// - parameter source: The source of the new consent. See the ``ConsentStatusSource`` documentation for more info.
+    /// - parameter source: The source of the new consent. See the ``ConsentSource`` documentation for more info.
     ///
     /// If no consent adapter module is available this method does nothing.
-    func grantConsent(source: ConsentStatusSource) {
+    public func grantConsent(source: ConsentSource) {
         grantConsent(source: source, completion: { _ in })
     }
 
@@ -121,17 +106,17 @@ public extension ConsentManagementPlatform {
     /// This method should be used only when a custom consent dialog is presented to the user, thereby making the publisher
     /// responsible for the UI-side of collecting consent. In most cases ``showConsentDialog(_:from:completion:)`` should
     /// be used instead.
-    /// - parameter source: The source of the new consent. See the ``ConsentStatusSource`` documentation for more info.
+    /// - parameter source: The source of the new consent. See the ``ConsentSource`` documentation for more info.
     ///
     /// If no consent adapter module is available this method does nothing.
-    func denyConsent(source: ConsentStatusSource) {
+    public func denyConsent(source: ConsentSource) {
         denyConsent(source: source, completion: { _ in })
     }
 
     /// Informs the CMP that the given consent should be reset.
     ///
     /// If no consent adapter module is available this method does nothing.
-    func resetConsent() {
+    public func resetConsent() {
         resetConsent(completion: { _ in })
     }
 
@@ -139,14 +124,13 @@ public extension ConsentManagementPlatform {
     /// - parameter type: The type of consent dialog to present. See the ``ConsentDialogType`` documentation for more info.
     /// If the CMP does not support a given type, it should default to whatever type it does support.
     /// - parameter viewController: The view controller to present the consent dialog from.
-    func showConsentDialog(_ type: ConsentDialogType, from viewController: UIViewController) {
+    public func showConsentDialog(_ type: ConsentDialogType, from viewController: UIViewController) {
         showConsentDialog(type, from: viewController, completion: { _ in })
     }
 }
 
 /// A type that serves as a proxy for a consent adapter.
 protocol ConsentAdapterProxy: AnyObject {
-
     /// The consent adapter that the proxy represents.
     var adapter: ConsentAdapter? { get set }
 }
@@ -155,15 +139,18 @@ protocol ConsentAdapterProxy: AnyObject {
 /// This class acts as a consent adapter proxy, forwarding method calls to whatever adapter module is available.
 /// It also manages the consent observers added by the publisher and forwards consent updates to them.
 final class ChartboostCoreConsentManagementPlatform: ConsentManagementPlatform, ConsentAdapterProxy, ConsentAdapterDelegate {
-
+    @Injected(\.appConfig) private var appConfig
     @Injected(\.sessionInfoProvider) private var sessionInfoProvider
 
     // List of observers added by the publisher.
     @Atomic private var observers: [WeakWrapper<ConsentObserver>] = []
 
-    /// The last consent status provided by the CMP.
-    /// We keep track of this to identify changes that require resetting the app session.
-    private var lastConsentStatus: ConsentStatus = .unknown
+    /// List of keys received on ``ConsentAdapterDelegate/onConsentChange(key:)`` calls, waiting to be reported
+    /// as changes to observers in a batch.
+    private var batchedConsentChangeKeys: Set<ConsentKey> = []
+
+    /// The timer scheduled to report consent changes in batch after a small delay.
+    private var batchedConsentChangeTimer: Timer?
 
     // MARK: ConsentAdapterProxy
 
@@ -180,31 +167,28 @@ final class ChartboostCoreConsentManagementPlatform: ConsentManagementPlatform, 
             logger.debug("Initial consent info available")
 
             // Forward call to external observers (modules and publisher observers)
+            let initialConsents = consents
             forAllObservers {
-                $0.onConsentModuleReady()
+                $0.onConsentModuleReady(initialConsents: initialConsents)
             }
         }
     }
 
     // MARK: ConsentManagementPlatform
-    
+
     var shouldCollectConsent: Bool {
         adapter?.shouldCollectConsent ?? false
     }
 
-    var consentStatus: ConsentStatus {
-        adapter?.consentStatus ?? .unknown
-    }
-
-    var objc_partnerConsentStatus: [String : NSNumber] {
-        adapter?.partnerConsentStatus.mapValues { NSNumber(integerLiteral: $0.rawValue) } ?? [:]
-    }
-
-    var consents: [ConsentStandard: ConsentValue] {
+    var consents: [ConsentKey: ConsentValue] {
         adapter?.consents ?? [:]
     }
 
-    func showConsentDialog(_ type: ConsentDialogType, from viewController: UIViewController, completion: @escaping (_ succeeded: Bool) -> Void) {
+    func showConsentDialog(
+        _ type: ConsentDialogType,
+        from viewController: UIViewController,
+        completion: @escaping (_ succeeded: Bool) -> Void
+    ) {
         guard let adapter else {
             logger.warning("showConsentDialog() had no effect because no CMP adapter is set.")
             completion(false)
@@ -213,7 +197,7 @@ final class ChartboostCoreConsentManagementPlatform: ConsentManagementPlatform, 
         adapter.showConsentDialog(type, from: viewController, completion: completion)
     }
 
-    func grantConsent(source: ConsentStatusSource, completion: @escaping (_ succeeded: Bool) -> Void) {
+    func grantConsent(source: ConsentSource, completion: @escaping (_ succeeded: Bool) -> Void) {
         guard let adapter else {
             logger.warning("grantConsent() had no effect because no CMP adapter is set.")
             completion(false)
@@ -222,7 +206,7 @@ final class ChartboostCoreConsentManagementPlatform: ConsentManagementPlatform, 
         adapter.grantConsent(source: source, completion: completion)
     }
 
-    func denyConsent(source: ConsentStatusSource, completion: @escaping (_ succeeded: Bool) -> Void) {
+    func denyConsent(source: ConsentSource, completion: @escaping (_ succeeded: Bool) -> Void) {
         guard let adapter else {
             logger.warning("denyConsent() had no effect because no CMP adapter is set.")
             completion(false)
@@ -256,38 +240,37 @@ final class ChartboostCoreConsentManagementPlatform: ConsentManagementPlatform, 
 // MARK: - ConsentAdapterDelegate
 
 extension ChartboostCoreConsentManagementPlatform {
+    func onConsentChange(key: ConsentKey) {
+        logger.debug("Consent for key '\(key)' changed")
 
-    func onConsentStatusChange(_ status: ConsentStatus) {
-        logger.debug("Consent status changed to \(status)")
-
-        // Reset app session if status changes from granted to another value
-        if lastConsentStatus == .granted && status != .granted {
-            logger.info("Resetting app session due to consent status change to \(status)")
-            sessionInfoProvider.reset()
+        let delay = appConfig.consentUpdateBatchDelay
+        if delay <= 0 {   // Batching disabled
+            sendUpdateToObservers(modifiedKeys: [key])
+        } else {    // Batching enabled
+            // `batchedConsentChangeKeys` and `batchedConsentChangeTimer` protected by accessing them always on the main queue
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                // Add modified key to the batch
+                self.batchedConsentChangeKeys.insert(key)
+                // Schedule the next update after a small delay, or do nothing it one is already scheduled
+                if self.batchedConsentChangeTimer == nil || self.batchedConsentChangeTimer?.isValid != true {
+                    self.batchedConsentChangeTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { _ in
+                        // Clear out batched keys and send update
+                        let keys = self.batchedConsentChangeKeys
+                        self.batchedConsentChangeKeys = []
+                        sendUpdateToObservers(modifiedKeys: keys)
+                    }
+                }
+            }
         }
-        lastConsentStatus = status
 
         // Forward call to external observers (modules and publisher observers)
-        forAllObservers {
-            $0.onConsentStatusChange(status)
-        }
-    }
-
-    func onPartnerConsentStatusChange(partnerID: String, status: ConsentStatus) {
-        logger.debug("Consent status for partner '\(partnerID)' changed to \(status)")
-
-        // Forward call to external observers (modules and publisher observers)
-        forAllObservers {
-            $0.onPartnerConsentStatusChange(partnerID: partnerID, status: status)
-        }
-    }
-
-    func onConsentChange(standard: ConsentStandard, value: ConsentValue?) {
-        logger.debug("Consent for standard '\(standard)' changed to \(value ?? "nil")")
-
-        // Forward call to external observers (modules and publisher observers)
-        forAllObservers {
-            $0.onConsentChange(standard: standard, value: value)
+        func sendUpdateToObservers(modifiedKeys: Set<ConsentKey>) {
+            logger.debug("Sending consent update for modified keys: \(modifiedKeys)")
+            let fullConsents = consents
+            forAllObservers {
+                $0.onConsentChange(fullConsents: fullConsents, modifiedKeys: modifiedKeys)
+            }
         }
     }
 

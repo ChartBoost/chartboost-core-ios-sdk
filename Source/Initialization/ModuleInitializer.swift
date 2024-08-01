@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -7,15 +7,14 @@ import Foundation
 
 /// Initializes a Core module, retrying if necessary.
 protocol ModuleInitializer: AnyObject {
-
     /// The module to initialize.
-    var module: InitializableModule { get }
+    var module: Module { get }
 
     /// Initializes the module.
-    /// - parameter configuration: A ``ModuleInitializationConfiguration`` for configuring the module.
+    /// - parameter configuration: A ``ModuleConfiguration`` for configuring the module.
     /// - parameter completion: A completion handler to be executed when the initialization operation is done.
     func initialize(
-        configuration: ModuleInitializationConfiguration,
+        configuration: ModuleConfiguration,
         completion: @escaping (ModuleInitializationResult) -> Void
     )
 }
@@ -23,8 +22,7 @@ protocol ModuleInitializer: AnyObject {
 /// Core's concrete implementation of ``ModuleInitializer``.
 /// It retries failed initializations using the values defined in the app config.
 final class ChartboostCoreModuleInitializer: ModuleInitializer {
-
-    let module: InitializableModule
+    let module: Module
 
     @Injected(\.appConfig) private var appConfig
 
@@ -33,17 +31,20 @@ final class ChartboostCoreModuleInitializer: ModuleInitializer {
 
     private let queue: DispatchQueue
 
-    init(module: InitializableModule, queue: DispatchQueue) {
+    init(module: Module, queue: DispatchQueue) {
         self.module = module
         self.queue = queue
     }
 
-    func initialize(configuration: ModuleInitializationConfiguration, completion: @escaping (ModuleInitializationResult) -> Void) {
+    func initialize(configuration: ModuleConfiguration, completion: @escaping (ModuleInitializationResult) -> Void) {
         initialize(configuration: configuration, retryCount: 0, completion: completion)
     }
 
-    private func initialize(configuration: ModuleInitializationConfiguration, retryCount: Int, completion: @escaping (ModuleInitializationResult) -> Void) {
-
+    private func initialize(
+        configuration: ModuleConfiguration,
+        retryCount: Int,
+        completion: @escaping (ModuleInitializationResult) -> Void
+    ) {
         let startDate = Date()
 
         // Start module initialization
@@ -51,7 +52,6 @@ final class ChartboostCoreModuleInitializer: ModuleInitializer {
             guard let self else { return }
 
             self.queue.async {
-
                 func callCompletion() {
                     completion(ModuleInitializationResult(startDate: startDate, error: error, module: self.module))
                 }
@@ -66,7 +66,7 @@ final class ChartboostCoreModuleInitializer: ModuleInitializer {
                             base: self.appConfig.moduleInitializationDelayBase,
                             limit: self.appConfig.moduleInitializationDelayMax
                         )
-                        
+
                         logger.error("Failed to initialize module \(self.module.moduleID) with error: \(error). Retry #\(newRetryCount) in \(delay) seconds.")
                         self.initializationRetryTimer = ThreadSafeTimer.scheduledTimer(withTimeInterval: delay) { [weak self] _ in
                             guard let self else { return }

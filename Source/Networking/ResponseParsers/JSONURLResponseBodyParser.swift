@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -14,7 +14,6 @@ protocol URLResponseParseableJSONRequest {
 /// A parser that knows how to transform the JSON data obtained from a URL response into the Codable model
 /// expected by a request that conforms to URLResponseParseableJSONRequest.
 struct JSONURLResponseBodyParser<Request: HTTPRequest>: URLResponseBodyParser where Request: URLResponseParseableJSONRequest {
-
     static func parse(_ data: Data, for request: Request) throws -> Request.ResponseBody {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = request.responseKeyDecodingStrategy

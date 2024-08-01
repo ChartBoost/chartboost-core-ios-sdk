@@ -1,5 +1,12 @@
 ## Changelog
 
+### Version 1.0.0 *(2024-08-01)*
+Improvements:
+- Initialization now takes an `SDKConfiguration` object and an optional `ModuleObserver`.
+- Renamed `ConsentKeys` and `ConsentValues` and changed them to a list of constants instead of an enum for ease of use.
+- Added `userDefaultsIABStrings` for IAB defaults to `ConsentAdapter`.
+- See the [documentation](https://docs.chartboost.com/en/mediation/integrate/core/ios/get-started/) for more information.
+
 ### Version 0.4.0 *(2023-12-7)*
 Improvements
 - Added `partnerConsentStatus` APIs.

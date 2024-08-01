@@ -1,12 +1,10 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-
 /// A HTTP response.
 struct HTTPResponse<Body> {
-
     /// The response HTTP status code.
     let statusCode: HTTPStatusCode?
 

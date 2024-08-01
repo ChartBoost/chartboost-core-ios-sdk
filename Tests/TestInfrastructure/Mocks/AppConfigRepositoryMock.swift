@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -6,7 +6,6 @@
 @testable import ChartboostCoreSDK
 
 final class AppConfigRepositoryMock: AppConfigRepository {
-
     // MARK: - Call Counts and Return Values
 
     var fetchAppConfigCallCount = 0
@@ -17,7 +16,7 @@ final class AppConfigRepositoryMock: AppConfigRepository {
 
     var config = AppConfig.build()
 
-    func fetchAppConfig(with configuration: SDKConfiguration, completion: @escaping (Error?) -> Void) {
+    func fetchAppConfig(configuration: SDKConfiguration, completion: @escaping (Error?) -> Void) {
         fetchAppConfigCallCount += 1
         fetchAppConfigConfigurationLastValue = configuration
         fetchAppConfigCompletionLastValue = completion

@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -9,7 +9,6 @@ typealias UserAgentCompletion = (_ userAgent: String?) -> Void
 
 /// Provides information related to the user agent.
 protocol UserAgentProvider {
-
     /// Obtain the user agent asynchronously.
     /// - parameter completion: Handler executed at the end of the user agent fetch operation.
     /// It returns either a valid string value or `nil` if the fetch fails.
@@ -22,7 +21,6 @@ protocol UserAgentProvider {
 /// Upon `init`, `UserAgentProvider` creates a `WKWebView` instance from main thread to obtain
 /// the user agent value by evaluating JavaScript "navigator.userAgent".
 final class ChartboostCoreUserAgentProvider: UserAgentProvider {
-
     /// Only for obtaining the user agent value.
     private var webView: WKWebView?
 
@@ -40,7 +38,6 @@ final class ChartboostCoreUserAgentProvider: UserAgentProvider {
 
         // Dispatch on main queue since we are using UI-related APIs.
         DispatchQueue.main.async { [self] in
-            
             // If the user agent is already available, return immediately.
             if let userAgent = self.userAgent {
                 logger.debug("Obtained user agent: \(userAgent)")
@@ -60,11 +57,10 @@ final class ChartboostCoreUserAgentProvider: UserAgentProvider {
             self.webView = webView
             self.isFetchingUserAgent = true
 
-            webView.evaluateJavaScript("navigator.userAgent") { [weak self] (result, error) in
-
+            webView.evaluateJavaScript("navigator.userAgent") { [weak self] result, error in
                 // iOS calls this completion on main thread already, thus no need to use `DispatchQueue.main` here.
 
-                guard let self else { 
+                guard let self else {
                     completion(nil)
                     return
                 }

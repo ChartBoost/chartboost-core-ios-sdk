@@ -1,13 +1,12 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class JSONTests: ChartboostCoreTestCase {
-
     /// Validates that a JSON can be created with different value types.
     func testInit() {
         XCTAssertEqual(JSON(value: 1).value, 1)
@@ -50,7 +49,7 @@ class JSONTests: ChartboostCoreTestCase {
         try validateEncoding(of: JSON(value: ["1", "2", "3"]))
         try validateEncoding(of: JSON(value: true))
         try validateEncoding(of: JSON(value: 42.4242))
-        try validateEncoding(of: JSON(value: ["key": "value", "key2": 23, "k3": [1, 2, 3], "k4": ["a": "b"]] as [String : Any]))
+        try validateEncoding(of: JSON(value: ["key": "value", "key2": 23, "k3": [1, 2, 3], "k4": ["a": "b"]] as [String: Any]))
 
         func validateEncoding<T>(of value: JSON<T>) throws {
             let encoder = JSONEncoder()

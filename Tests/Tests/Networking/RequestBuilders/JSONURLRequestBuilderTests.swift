@@ -1,13 +1,12 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-import XCTest
 @testable import ChartboostCoreSDK
+import XCTest
 
 class JSONURLRequestBuilderTests: ChartboostCoreTestCase {
-
     /// Validates that a call to `makeURLRequest()` returns a URL request with proper values obtained
     /// from the request object passed, including an "accept" HTTP header.
     func testMakeURLRequestIfAcceptsJSONResponseIsTrue() throws {
@@ -16,12 +15,13 @@ class JSONURLRequestBuilderTests: ChartboostCoreTestCase {
         XCTAssertEqual(urlRequest.url, request.url)
         XCTAssertEqual(
             urlRequest.allHTTPHeaderFields,
-            request.headers
-                .merging(
-                    ["Content-Type": "application/json; charset=utf-8",
-                     "Accept": "application/json; charset=utf-8"],
-                    uniquingKeysWith: { first, _ in first }
-                )
+            request.headers.merging(
+                [
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Accept": "application/json; charset=utf-8",
+                ],
+                uniquingKeysWith: { first, _ in first }
+            )
         )
         XCTAssertEqual(urlRequest.httpMethod, request.method.description)
 

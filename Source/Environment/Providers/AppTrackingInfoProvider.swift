@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -8,7 +8,6 @@ import AppTrackingTransparency
 
 /// Provides information related to app tracking.
 protocol AppTrackingInfoProvider {
-
     /// The tracking authorization status, as determined by the system's AppTrackingTransparency
     /// framework.
     @available(iOS 14.0, *)
@@ -29,7 +28,6 @@ protocol AppTrackingInfoProvider {
 
 /// Core's concrete implementation of ``AppTrackingInfoProvider``.
 final class ChartboostCoreAppTrackingInfoProvider: AppTrackingInfoProvider {
-
     @available(iOS 14.0, *)
     var appTrackingTransparencyStatus: ATTrackingManager.AuthorizationStatus {
         ATTrackingManager.trackingAuthorizationStatus
@@ -40,7 +38,13 @@ final class ChartboostCoreAppTrackingInfoProvider: AppTrackingInfoProvider {
     }
 
     var isLimitAdTrackingEnabled: Bool {
-        !ASIdentifierManager.shared().isAdvertisingTrackingEnabled
+        if #available(iOS 14.0, *) {
+            // Always return `true` because `ASIdentifierManager.shared().isAdvertisingTrackingEnabled` is always `false` on iOS 14+
+            // with `ATTrackingManager.trackingAuthorizationStatus` being `notDetermined` or `authorized`.
+            return true
+        } else {
+            return !ASIdentifierManager.shared().isAdvertisingTrackingEnabled
+        }
     }
 
     var vendorID: String? {

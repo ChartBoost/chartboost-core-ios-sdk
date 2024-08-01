@@ -1,0 +1,3 @@
+disabled_rules:
+  - identifier_name # allow variable names with `_Objc` or `_Swift` suffix
+  - type_name # allow variable names with `_Objc` or `_Swift` suffix

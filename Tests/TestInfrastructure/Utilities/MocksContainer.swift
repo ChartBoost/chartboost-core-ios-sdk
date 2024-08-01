@@ -1,4 +1,4 @@
-// Copyright 2023-2023 Chartboost, Inc.
+// Copyright 2023-2024 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -17,10 +17,11 @@ final class MocksContainer {
     var consentManager = ConsentManagementPlatformMock()
     var deviceInfoProvider = DeviceInfoProviderMock()
     var environment = EnvironmentMock()
+    var environmentChangePublisher = EnvironmentChangePublisherMock()
     var fileStorage = FileStorageMock()
     var infoPlist = InfoPlistMock()
     var jsonRepository = JSONRepositoryMock()
-    var moduleFactory = InitializableModuleFactoryMock()
+    var moduleFactory = UniversalModuleFactoryMock()
     var moduleInitializerFactory = ModuleInitializerFactoryMock()
     var networkConnectionTypeProvider = NetworkConnectionTypeProviderMock()
     var networkManager = NetworkManagerMock()
@@ -30,4 +31,3 @@ final class MocksContainer {
     var sessionInfoProvider = SessionInfoProviderMock()
     var userAgentProvider = UserAgentProviderMock()
 }
-
