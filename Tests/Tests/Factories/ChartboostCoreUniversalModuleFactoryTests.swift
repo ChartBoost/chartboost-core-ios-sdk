@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -21,7 +21,7 @@ class ChartboostCoreUniversalModuleFactoryTests: ChartboostCoreTestCase {
             credentials: .init(value: ["credentials": 12])
         )
         let expectedModule = ModuleMock()
-        nativeModuleFactory.makeModuleReturnValues = [expectedModule]
+        nativeModuleFactory.makeModuleHandler = { _, _, completion in completion(expectedModule) }
 
         // Make module
         let expectation = self.expectation(description: "Module completion called")
@@ -29,9 +29,9 @@ class ChartboostCoreUniversalModuleFactoryTests: ChartboostCoreTestCase {
             // Check that the native module factory was used and returned the proper module instance
             XCTAssertIdentical(module, expectedModule)
             XCTAssertEqual(nativeModuleFactory.makeModuleCallCount, 1)
-            XCTAssertEqual(nativeModuleFactory.makeModuleClassNameAllValues, [moduleInfo.className])
+            XCTAssertEqual(nativeModuleFactory.makeModuleArguments.last?.className, moduleInfo.className)
             XCTAssertEqual(
-                nativeModuleFactory.makeModuleCredentialsAllValues.first as? [String: Int],
+                nativeModuleFactory.makeModuleArguments.last?.credentials as? [String: Int],
                 moduleInfo.credentials?.value as? [String: Int]
             )
             XCTAssertEqual(nonNativeModuleFactory.makeModuleCallCount, 0)
@@ -50,7 +50,7 @@ class ChartboostCoreUniversalModuleFactoryTests: ChartboostCoreTestCase {
             credentials: .init(value: ["credentials": 12])
         )
         let expectedModule = ModuleMock()
-        nonNativeModuleFactory.makeModuleReturnValues = [expectedModule]
+        nonNativeModuleFactory.makeModuleHandler = { _, _, completion in completion(expectedModule) }
 
         // Set non-native factory and make module
         factory.nonNativeModuleFactory = nonNativeModuleFactory
@@ -59,9 +59,9 @@ class ChartboostCoreUniversalModuleFactoryTests: ChartboostCoreTestCase {
             // Check that the non-native module factory was used and returned the proper module instance
             XCTAssertIdentical(module, expectedModule)
             XCTAssertEqual(nonNativeModuleFactory.makeModuleCallCount, 1)
-            XCTAssertEqual(nonNativeModuleFactory.makeModuleClassNameAllValues, [moduleInfo.nonNativeClassName])
+            XCTAssertEqual(nonNativeModuleFactory.makeModuleArguments.last?.className, moduleInfo.nonNativeClassName)
             XCTAssertEqual(
-                nonNativeModuleFactory.makeModuleCredentialsAllValues.first as? [String: Int],
+                nonNativeModuleFactory.makeModuleArguments.last?.credentials as? [String: Int],
                 moduleInfo.credentials?.value as? [String: Int]
             )
             XCTAssertEqual(nativeModuleFactory.makeModuleCallCount, 0)
@@ -124,7 +124,8 @@ class ChartboostCoreUniversalModuleFactoryTests: ChartboostCoreTestCase {
             identifier: "some id",
             credentials: .init(value: ["credentials": 12])
         )
-        nativeModuleFactory.makeModuleReturnValues = [] // factory will return nil
+        // factory will return nil
+        nativeModuleFactory.makeModuleHandler = { _, _, completion in completion(nil) }
 
         // Make module
         let expectation = self.expectation(description: "Module completion called")
@@ -132,9 +133,9 @@ class ChartboostCoreUniversalModuleFactoryTests: ChartboostCoreTestCase {
             // Check that the native module factory was used and the returned module is nil
             XCTAssertNil(module)
             XCTAssertEqual(nativeModuleFactory.makeModuleCallCount, 1)
-            XCTAssertEqual(nativeModuleFactory.makeModuleClassNameAllValues, [moduleInfo.className])
+            XCTAssertEqual(nativeModuleFactory.makeModuleArguments.last?.className, moduleInfo.className)
             XCTAssertEqual(
-                nativeModuleFactory.makeModuleCredentialsAllValues.first as? [String: Int],
+                nativeModuleFactory.makeModuleArguments.last?.credentials as? [String: Int],
                 moduleInfo.credentials?.value as? [String: Int]
             )
             XCTAssertEqual(nonNativeModuleFactory.makeModuleCallCount, 0)
@@ -152,7 +153,8 @@ class ChartboostCoreUniversalModuleFactoryTests: ChartboostCoreTestCase {
             identifier: "some id",
             credentials: .init(value: ["credentials": 12])
         )
-        nonNativeModuleFactory.makeModuleReturnValues = []  // factory will return nil
+        // factory will return nil
+        nonNativeModuleFactory.makeModuleHandler = { _, _, completion in completion(nil) }
 
         // Set non-native factory and make module
         factory.nonNativeModuleFactory = nonNativeModuleFactory
@@ -161,9 +163,9 @@ class ChartboostCoreUniversalModuleFactoryTests: ChartboostCoreTestCase {
             // Check that the non-native module factory was used and the returned module is nil
             XCTAssertNil(module)
             XCTAssertEqual(nonNativeModuleFactory.makeModuleCallCount, 1)
-            XCTAssertEqual(nonNativeModuleFactory.makeModuleClassNameAllValues, [moduleInfo.nonNativeClassName])
+            XCTAssertEqual(nonNativeModuleFactory.makeModuleArguments.last?.className, moduleInfo.nonNativeClassName)
             XCTAssertEqual(
-                nonNativeModuleFactory.makeModuleCredentialsAllValues.first as? [String: Int],
+                nonNativeModuleFactory.makeModuleArguments.last?.credentials as? [String: Int],
                 moduleInfo.credentials?.value as? [String: Int]
             )
             XCTAssertEqual(nativeModuleFactory.makeModuleCallCount, 0)

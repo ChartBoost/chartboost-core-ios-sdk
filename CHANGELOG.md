@@ -1,5 +1,8 @@
 ## Changelog
 
+### Version 1.1.0 *(2025-10-02)*
+- Bug fixes and improvements.
+
 ### Version 1.0.0 *(2024-08-01)*
 Improvements:
 - Initialization now takes an `SDKConfiguration` object and an optional `ModuleObserver`.

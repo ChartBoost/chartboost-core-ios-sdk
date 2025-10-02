@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -16,26 +16,26 @@ class PublisherMetadataTests: ChartboostCoreTestCase {
         XCTAssertEqual(mocks.publisherInfoProvider.frameworkVersion, "1234")
         XCTAssertEqual(mocks.environmentChangePublisher.publishChangeCallCount, 2)
         // .frameworkName was called before .frameworkVersion
-        XCTAssertEqual(mocks.environmentChangePublisher.publishChangePropertyLastValue, .frameworkVersion)
+        XCTAssertEqual(mocks.environmentChangePublisher.publishChangeArguments.last, .frameworkVersion)
 
         publisherMetadata.setIsUserUnderage(false)
         XCTAssertEqual(mocks.publisherInfoProvider.isUserUnderage, false)
         XCTAssertEqual(mocks.environmentChangePublisher.publishChangeCallCount, 3)
-        XCTAssertEqual(mocks.environmentChangePublisher.publishChangePropertyLastValue, .isUserUnderage)
+        XCTAssertEqual(mocks.environmentChangePublisher.publishChangeArguments.last, .isUserUnderage)
 
         publisherMetadata.setPlayerID("some player ID 1234")
         XCTAssertEqual(mocks.publisherInfoProvider.playerID, "some player ID 1234")
         XCTAssertEqual(mocks.environmentChangePublisher.publishChangeCallCount, 4)
-        XCTAssertEqual(mocks.environmentChangePublisher.publishChangePropertyLastValue, .playerID)
+        XCTAssertEqual(mocks.environmentChangePublisher.publishChangeArguments.last, .playerID)
 
         publisherMetadata.setPublisherAppID("some publisher app ID 1234")
         XCTAssertEqual(mocks.publisherInfoProvider.publisherAppID, "some publisher app ID 1234")
         XCTAssertEqual(mocks.environmentChangePublisher.publishChangeCallCount, 5)
-        XCTAssertEqual(mocks.environmentChangePublisher.publishChangePropertyLastValue, .publisherAppID)
+        XCTAssertEqual(mocks.environmentChangePublisher.publishChangeArguments.last, .publisherAppID)
 
         publisherMetadata.setPublisherSessionID("some publisher session ID 1234")
         XCTAssertEqual(mocks.publisherInfoProvider.publisherSessionID, "some publisher session ID 1234")
         XCTAssertEqual(mocks.environmentChangePublisher.publishChangeCallCount, 6)
-        XCTAssertEqual(mocks.environmentChangePublisher.publishChangePropertyLastValue, .publisherSessionID)
+        XCTAssertEqual(mocks.environmentChangePublisher.publishChangeArguments.last, .publisherSessionID)
     }
 }

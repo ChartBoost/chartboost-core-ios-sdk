@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -65,7 +65,7 @@ class EnvironmentTests: ChartboostCoreTestCase {
         environment.publishChange(to: .frameworkName)
         waitForTasksDispatchedOnMainQueue()
         XCTAssertEqual(observer1.onChangeCallCount, 1)
-        XCTAssertEqual(observer1.onChangePropertyLastValue, .frameworkName)
+        XCTAssertEqual(observer1.onChangeArguments.last, .frameworkName)
 
         // Add second observer
         environment.addObserver(observer2)
@@ -74,9 +74,9 @@ class EnvironmentTests: ChartboostCoreTestCase {
         environment.publishChange(to: .frameworkVersion)
         waitForTasksDispatchedOnMainQueue()
         XCTAssertEqual(observer1.onChangeCallCount, 2)
-        XCTAssertEqual(observer1.onChangePropertyLastValue, .frameworkVersion)
+        XCTAssertEqual(observer1.onChangeArguments.last, .frameworkVersion)
         XCTAssertEqual(observer2.onChangeCallCount, 1)
-        XCTAssertEqual(observer2.onChangePropertyLastValue, .frameworkVersion)
+        XCTAssertEqual(observer2.onChangeArguments.last, .frameworkVersion)
     }
 
     /// Validates that observers can be removed and property updates are no longer forwarded to them.
@@ -92,9 +92,9 @@ class EnvironmentTests: ChartboostCoreTestCase {
         environment.publishChange(to: .playerID)
         waitForTasksDispatchedOnMainQueue()
         XCTAssertEqual(observer1.onChangeCallCount, 1)
-        XCTAssertEqual(observer1.onChangePropertyLastValue, .playerID)
+        XCTAssertEqual(observer1.onChangeArguments.last, .playerID)
         XCTAssertEqual(observer2.onChangeCallCount, 1)
-        XCTAssertEqual(observer2.onChangePropertyLastValue, .playerID)
+        XCTAssertEqual(observer2.onChangeArguments.last, .playerID)
 
         // Remove one observer
         environment.removeObserver(observer1)
@@ -103,9 +103,9 @@ class EnvironmentTests: ChartboostCoreTestCase {
         environment.publishChange(to: .isUserUnderage)
         waitForTasksDispatchedOnMainQueue()
         XCTAssertEqual(observer1.onChangeCallCount, 1)
-        XCTAssertEqual(observer1.onChangePropertyLastValue, .playerID)
+        XCTAssertEqual(observer1.onChangeArguments.last, .playerID)
         XCTAssertEqual(observer2.onChangeCallCount, 2)
-        XCTAssertEqual(observer2.onChangePropertyLastValue, .isUserUnderage)
+        XCTAssertEqual(observer2.onChangeArguments.last, .isUserUnderage)
 
         // Remove the other observer
         environment.removeObserver(observer2)
@@ -129,7 +129,7 @@ class EnvironmentTests: ChartboostCoreTestCase {
         waitForTasksDispatchedOnMainQueue()
 
         XCTAssertEqual(observer.onChangeCallCount, 1)
-        XCTAssertEqual(observer.onChangePropertyLastValue, .frameworkName)
+        XCTAssertEqual(observer.onChangeArguments.last, .frameworkName)
     }
 
     /// Validates that the publisher metadata object does not retain its observers.

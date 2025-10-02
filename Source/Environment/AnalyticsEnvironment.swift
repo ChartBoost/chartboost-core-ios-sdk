@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -45,10 +45,10 @@ public protocol AnalyticsEnvironment {
     /// The device model, e.g. "iPhone11,2".
     var deviceModel: String { get }
 
-    /// The framework name set by the publisher through a call to ``PublisherMetadata/setFramework(name:, version:)``.
+    /// The framework name set by the publisher through a call to ``PublisherMetadata/setFramework(name:version:)``.
     var frameworkName: String? { get }
 
-    /// The framework version set by the publisher through a call to ``PublisherMetadata/setFramework(name:, version:)``.
+    /// The framework version set by the publisher through a call to ``PublisherMetadata/setFramework(name:version:)``.
     var frameworkVersion: String? { get }
 
     /// Indicates wheter the user has limited ad tracking enabled, as determined by a

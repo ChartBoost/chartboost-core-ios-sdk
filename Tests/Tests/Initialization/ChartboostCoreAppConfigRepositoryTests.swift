@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -31,6 +31,8 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
     /// Validates that a call to `fetchAppConfig()` fetches a new config from backend before completing
     /// when no config is cached.
     func testFetchAppConfigWhenNoConfigIsCached() {
+        let appConfigRequest = AppConfigRequest(body: nil)
+        mocks.appConfigRequestFactory.makeRequestHandler = { _, _, completion in completion(appConfigRequest) }
         let expectation = self.expectation(description: "wait for fetch completion")
 
         // Start the fetch
@@ -44,10 +46,10 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
 
         // Check that the network request was sent with the proper info from the request factory
         XCTAssertEqual(mocks.appConfigRequestFactory.makeRequestCallCount, 1)
-        XCTAssertIdentical(mocks.appConfigRequestFactory.makeRequestConfigurationLastValue, configuration)
-        XCTAssertIdentical(mocks.appConfigRequestFactory.makeRequestEnvironmentLastValue, mocks.environment)
+        XCTAssertIdentical(mocks.appConfigRequestFactory.makeRequestArguments.last?.configuration, configuration)
+        XCTAssertIdentical(mocks.appConfigRequestFactory.makeRequestArguments.last?.environment, mocks.environment)
         XCTAssertEqual(mocks.networkManager.sendCallCount, 1)
-        XCTAssertEqual(mocks.networkManager.sendRequestLastValue as? AppConfigRequest, mocks.appConfigRequestFactory.makeRequestReturnValue)
+        XCTAssertEqual(mocks.networkManager.sendRequestLastValue as? AppConfigRequest, appConfigRequest)
 
         // Finish the network request successfully
         let response = AppConfigRequest.ResponseBody.build()
@@ -60,7 +62,7 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
 
         // Check that the config was updated using the info provided by the factory
         XCTAssertEqual(mocks.appConfigFactory.makeAppConfigCallCount, 1)
-        XCTAssertEqual(mocks.appConfigFactory.makeAppConfigResponseLastValue, response)
+        XCTAssertEqual(mocks.appConfigFactory.makeAppConfigArguments.last?.response, response)
         XCTAssertEqual(repository.config, mocks.appConfigFactory.makeAppConfigReturnValue)
 
         // Check that new config was persisted
@@ -161,7 +163,7 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
 
         // Check that the config was updated using the new info provided by the factory
         XCTAssertEqual(mocks.appConfigFactory.makeAppConfigCallCount, 1)
-        XCTAssertEqual(mocks.appConfigFactory.makeAppConfigResponseLastValue, response)
+        XCTAssertEqual(mocks.appConfigFactory.makeAppConfigArguments.last?.response, response)
         XCTAssertEqual(repository.config, mocks.appConfigFactory.makeAppConfigReturnValue)
 
         // Check that new config was persisted
@@ -201,7 +203,7 @@ class ChartboostCoreAppConfigRepositoryTests: ChartboostCoreTestCase {
 
         // Check that the config was updated using the new info provided by the factory
         XCTAssertEqual(mocks.appConfigFactory.makeAppConfigCallCount, 1)
-        XCTAssertEqual(mocks.appConfigFactory.makeAppConfigResponseLastValue, response)
+        XCTAssertEqual(mocks.appConfigFactory.makeAppConfigArguments.last?.response, response)
         XCTAssertEqual(repository.config, mocks.appConfigFactory.makeAppConfigReturnValue)
 
         // Check that new config was persisted

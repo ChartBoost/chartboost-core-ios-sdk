@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -13,11 +13,11 @@ public typealias ConsentKey = String
 @objcMembers
 public final class ConsentKeys: NSObject {
     /// CCPA opt-in key.
-    /// Possible values are: ``ConsentValue/denied``, ``ConsentValue/granted``, ``ConsentValue/doesNotApply``.
+    /// Possible values are: ``ConsentValues/denied``, ``ConsentValues/granted``, ``ConsentValues/doesNotApply``.
     public static let ccpaOptIn: ConsentKey = "chartboost_core_ccpa_opt_in"
 
     /// GDPR consent given key.
-    /// Possible values are: ``ConsentValue/denied``, ``ConsentValue/granted``, ``ConsentValue/doesNotApply``.
+    /// Possible values are: ``ConsentValues/denied``, ``ConsentValues/granted``, ``ConsentValues/doesNotApply``.
     public static let gdprConsentGiven: ConsentKey = "chartboost_core_gdpr_consent_given"
 
     /// GPP key.

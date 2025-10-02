@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -48,7 +48,7 @@ public protocol ConsentAdapter: Module {
 
     /// Informs the CMP that the user has granted consent.
     /// This method should be used only when a custom consent dialog is presented to the user, thereby making the publisher
-    /// responsible for the UI-side of collecting consent. In most cases ``showConsentDialog(_:from:completion:)`` should
+    /// responsible for the UI-side of collecting consent. In most cases ``ConsentAdapter/showConsentDialog(_:from:completion:)`` should
     /// be used instead.
     /// If the CMP does not support custom consent dialogs or the operation fails for any other reason, the completion
     /// handler is executed with a `false` parameter.
@@ -58,7 +58,7 @@ public protocol ConsentAdapter: Module {
 
     /// Informs the CMP that the user has denied consent.
     /// This method should be used only when a custom consent dialog is presented to the user, thereby making the publisher
-    /// responsible for the UI-side of collecting consent. In most cases ``showConsentDialog(_:from:completion:)`` should
+    /// responsible for the UI-side of collecting consent. In most cases ``ConsentAdapter/showConsentDialog(_:from:completion:)`` should
     /// be used instead.
     /// If the CMP does not support custom consent dialogs or the operation fails for any other reason, the completion
     /// handler is executed with a `false` parameter.

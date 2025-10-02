@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -12,7 +12,7 @@ import Foundation
 public protocol ModuleFactory {
     /// Returns a module instantiate via reflection.
     /// - parameter className: The name of the module class.
-    /// - parameter credentials: The dictionary object to pass to ``Module.init(credentials:)``.
+    /// - parameter credentials: The dictionary object to pass to ``Module/init(credentials:)``.
     /// - parameter completion: A closure that receives the generated module.
     func makeModule(className: String, credentials: [String: Any]?, completion: @escaping (Module?) -> Void)
 }

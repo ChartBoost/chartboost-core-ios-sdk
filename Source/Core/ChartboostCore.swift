@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -17,7 +17,7 @@ public final class ChartboostCore: NSObject {
     @Injected(\.sdkInitializer) private static var sdkInitializer
 
     /// The version of the Core SDK.
-    public static let sdkVersion = "1.0.0"
+    public static let sdkVersion = "1.1.0"
 
     /// Publisher-provided metadata.
     public static let publisherMetadata = PublisherMetadata()

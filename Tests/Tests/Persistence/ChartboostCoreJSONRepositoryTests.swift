@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -26,8 +26,8 @@ class ChartboostCoreJSONRepositoryTests: ChartboostCoreTestCase {
 
         XCTAssertEqual(value, model)
         XCTAssertEqual(
-            mocks.fileStorage.readDataURLLastValue,
-            (mocks.fileStorage.systemDirectoryURLReturnValue as? URL)?
+            mocks.fileStorage.readDataArguments.last,
+            mocks.fileStorage.systemDirectoryURLReturnValue
                 .appendingPathComponent(directoryName)
                 .appendingPathComponent("someName.json")
         )
@@ -37,7 +37,7 @@ class ChartboostCoreJSONRepositoryTests: ChartboostCoreTestCase {
     /// not exist in the repository directory.
     func testReadNonExistingJSON() throws {
         let expectedError = NSError(domain: "no file", code: 33)
-        mocks.fileStorage.readDataReturnValue = expectedError
+        mocks.fileStorage.readDataThrowableError = expectedError
 
         do {
             _ = try repository.read(CodableModel.self, name: "someName")
@@ -50,7 +50,7 @@ class ChartboostCoreJSONRepositoryTests: ChartboostCoreTestCase {
     /// Validates that a call to `read()` throws an error if the file cannot be decoded into
     /// the expected type.
     func testReadInvalidJSON() throws {
-        mocks.fileStorage.readDataReturnValue = "not an encoded CodableModel".data(using: .utf8)
+        mocks.fileStorage.readDataReturnValue = try XCTUnwrap("not an encoded CodableModel".data(using: .utf8))
 
         do {
             _ = try repository.read(CodableModel.self, name: "someName")
@@ -65,15 +65,15 @@ class ChartboostCoreJSONRepositoryTests: ChartboostCoreTestCase {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         let data = try encoder.encode(model)
-        mocks.fileStorage.writeError = nil
+        mocks.fileStorage.writeThrowableError = nil
 
         try repository.write(model, name: "someName")
 
         XCTAssertEqual(mocks.fileStorage.writeCallCount, 1)
-        XCTAssertEqual(mocks.fileStorage.writeDataLastValue, data)
+        XCTAssertEqual(mocks.fileStorage.writeArguments.last?.data, data)
         XCTAssertEqual(
-            mocks.fileStorage.writeURLLastValue,
-            (mocks.fileStorage.systemDirectoryURLReturnValue as? URL)?
+            mocks.fileStorage.writeArguments.last?.url,
+            mocks.fileStorage.systemDirectoryURLReturnValue
                 .appendingPathComponent(directoryName)
                 .appendingPathComponent("someName.json")
         )
@@ -83,7 +83,7 @@ class ChartboostCoreJSONRepositoryTests: ChartboostCoreTestCase {
     func testWriteJSONWithFailure() throws {
         let model = CodableModel()
         let expectedError = NSError(domain: "failed to write", code: 33)
-        mocks.fileStorage.writeError = expectedError
+        mocks.fileStorage.writeThrowableError = expectedError
 
         do {
             _ = try repository.write(model, name: "someName")
@@ -95,14 +95,14 @@ class ChartboostCoreJSONRepositoryTests: ChartboostCoreTestCase {
 
     /// Validates that a call to `removeValue()` succeeds if the file storage succeeds in removing the file.
     func testRemoveValueWithSuccess() throws {
-        mocks.fileStorage.removeFileError = nil
+        mocks.fileStorage.removeFileThrowableError = nil
 
         try repository.removeValue(name: "someName")
 
         XCTAssertEqual(mocks.fileStorage.removeFileCallCount, 1)
         XCTAssertEqual(
-            mocks.fileStorage.removeFileURLLastValue,
-            (mocks.fileStorage.systemDirectoryURLReturnValue as? URL)?
+            mocks.fileStorage.removeFileArguments.last,
+            mocks.fileStorage.systemDirectoryURLReturnValue
                 .appendingPathComponent(directoryName)
                 .appendingPathComponent("someName.json")
         )
@@ -111,7 +111,7 @@ class ChartboostCoreJSONRepositoryTests: ChartboostCoreTestCase {
     /// Validates that a call to `removeValue()` throws an error if the file storage fails to remove the file.
     func testRemoveValueWithFailure() throws {
         let expectedError = NSError(domain: "failed to remove", code: 33)
-        mocks.fileStorage.removeFileError = expectedError
+        mocks.fileStorage.removeFileThrowableError = expectedError
 
         do {
             try repository.removeValue(name: "someName")
@@ -129,8 +129,8 @@ class ChartboostCoreJSONRepositoryTests: ChartboostCoreTestCase {
 
         XCTAssertTrue(value)
         XCTAssertEqual(
-            mocks.fileStorage.fileExistsURLLastValue,
-            (mocks.fileStorage.systemDirectoryURLReturnValue as? URL)?
+            mocks.fileStorage.fileExistsArguments.last,
+            mocks.fileStorage.systemDirectoryURLReturnValue
                 .appendingPathComponent(directoryName)
                 .appendingPathComponent("someName.json")
         )

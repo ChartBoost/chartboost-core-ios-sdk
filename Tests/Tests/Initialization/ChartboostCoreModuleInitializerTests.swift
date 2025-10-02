@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -29,7 +29,7 @@ class ChartboostCoreModuleInitializerTests: ChartboostCoreTestCase {
         XCTAssertEqual(module.initializeCallCount, 1)
 
         // Trigger module initialization completion with success
-        module.initializeCompletionLastValue?(nil)
+        module.initializeArguments.last?.completion(nil)
 
         // The the initialize() completion should be executed at this point
         waitForExpectations(timeout: 5)
@@ -57,28 +57,28 @@ class ChartboostCoreModuleInitializerTests: ChartboostCoreTestCase {
         // Check that the module was asked to initialize
         XCTAssertEqual(module.initializeCallCount, 1)
         // Trigger module initialization completion with an error
-        module.initializeCompletionLastValue?(NSError(domain: "", code: 3))
+        module.initializeArguments.last?.completion(NSError(domain: "", code: 3))
         // Wait a short amount of time for the retry to trigger
         wait(0.5)
 
         // Check that the module was asked to initialize again
         XCTAssertEqual(module.initializeCallCount, 2)
         // Trigger module initialization completion with an error
-        module.initializeCompletionLastValue?(NSError(domain: "", code: 3))
+        module.initializeArguments.last?.completion(NSError(domain: "", code: 3))
         // Wait a short amount of time for the retry to trigger
         wait(0.5)
 
         // Check that the module was asked to initialize again
         XCTAssertEqual(module.initializeCallCount, 3)
         // Trigger module initialization completion with an error
-        module.initializeCompletionLastValue?(NSError(domain: "", code: 3))
+        module.initializeArguments.last?.completion(NSError(domain: "", code: 3))
         // Wait a short amount of time for the retry to trigger
         wait(0.5)
 
         // Check that the module was asked to initialize again
         XCTAssertEqual(module.initializeCallCount, 4)
         // Trigger module initialization completion with an error
-        module.initializeCompletionLastValue?(expectedError)
+        module.initializeArguments.last?.completion(expectedError)
 
         // The the initialize() completion should be executed at this point
         waitForExpectations(timeout: 5)
@@ -105,14 +105,14 @@ class ChartboostCoreModuleInitializerTests: ChartboostCoreTestCase {
         // Check that the module was asked to initialize
         XCTAssertEqual(module.initializeCallCount, 1)
         // Trigger module initialization completion with an error
-        module.initializeCompletionLastValue?(NSError(domain: "", code: 3))
+        module.initializeArguments.last?.completion(NSError(domain: "", code: 3))
         // Wait a short amount of time for the retry to trigger
         wait(0.5)
 
         // Check that the module was asked to initialize again
         XCTAssertEqual(module.initializeCallCount, 2)
         // Trigger module initialization completion with success
-        module.initializeCompletionLastValue?(nil)
+        module.initializeArguments.last?.completion(nil)
 
         // The the initialize() completion should be executed at this point
         waitForExpectations(timeout: 5)

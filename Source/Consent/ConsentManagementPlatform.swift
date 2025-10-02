@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -11,7 +11,7 @@ import UIKit
 ///
 /// Note that a ``ConsentAdapter`` module must be integrated to enable Core's
 /// All methods are no-ops unless a ``ConsentAdapter`` Core module is integrated in the app and initialized.
-/// ``ConsentObserver`` objects passed on a call to ``addObserver(_:)`` will get a call to 
+/// ``ConsentObserver`` objects passed on a call to ``ConsentManagementPlatform/addObserver(_:)`` will get a call to
 /// ``ConsentObserver/onConsentModuleReady(initialConsents:)`` when the ``ConsentAdapter`` is initialized
 /// and the ``ConsentManagementPlatform`` is ready to be used.
 @objc(CBCConsentManagementPlatform)
@@ -48,8 +48,8 @@ public protocol ConsentManagementPlatform: AnyObject {
 
     /// Informs the CMP that the user has granted consent.
     /// This method should be used only when a custom consent dialog is presented to the user, thereby making the publisher
-    /// responsible for the UI-side of collecting consent. In most cases ``showConsentDialog(_:from:completion:)`` should
-    /// be used instead.
+    /// responsible for the UI-side of collecting consent. In most cases 
+    /// ``ConsentManagementPlatform/showConsentDialog(_:from:completion:)`` should be used instead.
     /// If the CMP does not support custom consent dialogs or the operation fails for any other reason, the completion
     /// handler is executed with a `false` parameter.
     /// - parameter source: The source of the new consent. See the ``ConsentSource`` documentation for more info.
@@ -60,8 +60,8 @@ public protocol ConsentManagementPlatform: AnyObject {
 
     /// Informs the CMP that the user has denied consent.
     /// This method should be used only when a custom consent dialog is presented to the user, thereby making the publisher
-    /// responsible for the UI-side of collecting consent. In most cases ``showConsentDialog(_:from:completion:)`` should
-    /// be used instead.
+    /// responsible for the UI-side of collecting consent. In most cases
+    /// ``ConsentManagementPlatform/showConsentDialog(_:from:completion:)`` should be used instead.
     /// If the CMP does not support custom consent dialogs or the operation fails for any other reason, the completion
     /// handler is executed with a `false` parameter.
     /// - parameter source: The source of the new consent. See the ``ConsentSource`` documentation for more info.

@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -12,7 +12,7 @@ class ChartboostCoreAppConfigRequestFactoryTests: ChartboostCoreTestCase {
     /// Validates that a call to `makeRequest()` returns a request with the expected values.
     func testMakeRequest() {
         let configuration = SDKConfiguration(chartboostAppID: "some app id")
-        let environment = EnvironmentMock()
+        let environment = AnalyticsEnvironmentMock()
         let expectation = self.expectation(description: "wait for fetch completion")
 
         factory.makeRequest(configuration: configuration, environment: environment) { request in

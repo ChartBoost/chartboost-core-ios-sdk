@@ -1,0 +1,16 @@
+platform :ios, '13.0'
+
+target 'CoreDemo' do
+
+  if ENV['CORE_DEMO_BUILD_TYPE'] == "DEVELOPMENT"
+    # Local pod dependencies for internal use
+    pod 'ChartboostCoreSDK', :path => '../'
+    pod 'ChartboostCoreConsentAdapterUsercentrics', :path => '../Module/chartboost-core-ios-consent-adapter-usercentrics/'
+    # pod 'ChartboostCoreConsentAdapterGoogleUserMessagingPlatform', :path => '../Module/chartboost-core-ios-consent-adapter-google-user-messaging-platform/'
+  else
+    # Production pod dependencies for general use
+    pod 'ChartboostCoreSDK', '~> 1.1.0'
+    pod 'ChartboostCoreConsentAdapterUsercentrics'
+    # pod 'ChartboostCoreConsentAdapterGoogleUserMessagingPlatform'
+  end
+end

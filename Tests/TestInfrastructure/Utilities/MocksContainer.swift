@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -14,9 +14,9 @@ final class MocksContainer {
     var appConfigRequestFactory = AppConfigRequestFactoryMock()
     var appConfigRepository = AppConfigRepositoryMock()
     var appTrackingInfoProvider = AppTrackingInfoProviderMock()
-    var consentManager = ConsentManagementPlatformMock()
+    var consentManager = ConsentManagementPlatformAdapterProxyMock()
     var deviceInfoProvider = DeviceInfoProviderMock()
-    var environment = EnvironmentMock()
+    var environment = AnalyticsEnvironmentMock()
     var environmentChangePublisher = EnvironmentChangePublisherMock()
     var fileStorage = FileStorageMock()
     var infoPlist = InfoPlistMock()

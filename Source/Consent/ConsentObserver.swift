@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -16,7 +16,7 @@ public protocol ConsentObserver: AnyObject {
     /// It's important to note that a consent adapter module may take some time to initialize and
     /// restore the consent information from a previous session. Until then, ``ConsentManagementPlatform``
     /// provides default values for its properties. Once the information becomes first available,
-    /// this method is invoked, but not ``onConsentChange(fullConsents:modifiedKeys:)``.
+    /// this method is invoked, but not ``ConsentObserver/onConsentChange(fullConsents:modifiedKeys:)``.
     ///
     /// - parameter initialConsents: The initial value for ``ConsentManagementPlatform/consents`` right after the
     /// CMP became ready. Here the CMP may have restored consent info from a previous session.

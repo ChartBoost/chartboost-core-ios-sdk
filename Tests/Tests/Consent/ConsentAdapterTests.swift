@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -62,22 +62,22 @@ class ConsentAdapterTests: XCTestCase {
         // Set TCF - check that adapter call is made
         UserDefaults.standard.set("12345", forKey: "IABTCF_TCString")
         XCTAssertEqual(delegate.onConsentChangeCallCount, 1)
-        XCTAssertEqual(delegate.onConsentChangeConsentKeyLastValue, ConsentKeys.tcf)
+        XCTAssertEqual(delegate.onConsentChangeArguments.last, ConsentKeys.tcf)
 
         // Set an unrelated value - check that nothing changes
         UserDefaults.standard.set("12345", forKey: "unrelated key")
         XCTAssertEqual(delegate.onConsentChangeCallCount, 1)
-        XCTAssertEqual(delegate.onConsentChangeConsentKeyLastValue, ConsentKeys.tcf)
+        XCTAssertEqual(delegate.onConsentChangeArguments.last, ConsentKeys.tcf)
 
         // Set GPP - check that adapter call is made
         UserDefaults.standard.set("abcd", forKey: "IABGPP_HDR_GppString")
         XCTAssertEqual(delegate.onConsentChangeCallCount, 2)
-        XCTAssertEqual(delegate.onConsentChangeConsentKeyLastValue, ConsentKeys.gpp)
+        XCTAssertEqual(delegate.onConsentChangeArguments.last, ConsentKeys.gpp)
 
         // Set USP - check that adapter call is made
         UserDefaults.standard.set("09876", forKey: "IABUSPrivacy_String")
         XCTAssertEqual(delegate.onConsentChangeCallCount, 3)
-        XCTAssertEqual(delegate.onConsentChangeConsentKeyLastValue, ConsentKeys.usp)
+        XCTAssertEqual(delegate.onConsentChangeArguments.last, ConsentKeys.usp)
     }
 }
 

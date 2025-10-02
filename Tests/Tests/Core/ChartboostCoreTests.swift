@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -16,10 +16,10 @@ class ChartboostCoreTests: ChartboostCoreTestCase {
         ChartboostCore.initializeSDK(configuration: configuration, moduleObserver: observer)
 
         XCTAssertEqual(mocks.sdkInitializer.initializeSDKCallCount, 1)
-        XCTAssertEqual(mocks.sdkInitializer.initializeSDKConfigurationLastValue, configuration)
-        XCTAssertIdentical(mocks.sdkInitializer.initializeSDKModulesLastValue?[0], modules[0])
-        XCTAssertIdentical(mocks.sdkInitializer.initializeSDKModulesLastValue?[1], modules[1])
-        XCTAssertIdentical(mocks.sdkInitializer.initializeSDKModuleObserverLastValue, observer)
+        XCTAssertEqual(mocks.sdkInitializer.initializeSDKArguments.last?.configuration, configuration)
+        XCTAssertIdentical(mocks.sdkInitializer.initializeSDKArguments.last?.configuration.modules[0], modules[0])
+        XCTAssertIdentical(mocks.sdkInitializer.initializeSDKArguments.last?.configuration.modules[1], modules[1])
+        XCTAssertIdentical(mocks.sdkInitializer.initializeSDKArguments.last?.moduleObserver, observer)
     }
 
     /// Validates that `sdkVersion` is a semantic version string.
@@ -64,8 +64,8 @@ class ChartboostCoreTests: ChartboostCoreTestCase {
 
         // Check that the handler received the expected log entry
         XCTAssertEqual(handler.handleCallCount, 1)
-        XCTAssertEqual(handler.handleEntryLastValue?.message, "some error message")
-        XCTAssertEqual(handler.handleEntryLastValue?.logLevel, .error)
+        XCTAssertEqual(handler.handleArguments.last?.message, "some error message")
+        XCTAssertEqual(handler.handleArguments.last?.logLevel, .error)
     }
 
     /// Validates that `detachLogHandler(_:)` makes it so the handler stops receiving log entries.

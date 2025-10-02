@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -86,9 +86,9 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
             completed = true
         }
 
-        XCTAssertEqual(adapter.grantConsentStatusCallCount, 1)
-        XCTAssertEqual(adapter.grantConsentSourceLastValue, .developer)
-        adapter.grantConsentStatusLastCompletion?(true)
+        XCTAssertEqual(adapter.grantConsentCallCount, 1)
+        XCTAssertEqual(adapter.grantConsentArguments.last?.source, .developer)
+        adapter.grantConsentArguments.last?.completion(true)
 
         XCTAssertTrue(completed)
     }
@@ -104,9 +104,9 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
             completed = true
         }
 
-        XCTAssertEqual(adapter.denyConsentStatusCallCount, 1)
-        XCTAssertEqual(adapter.denyConsentSourceLastValue, .user)
-        adapter.denyConsentStatusLastCompletion?(false)
+        XCTAssertEqual(adapter.denyConsentCallCount, 1)
+        XCTAssertEqual(adapter.denyConsentArguments.last?.source, .user)
+        adapter.denyConsentArguments.last?.completion(false)
 
         XCTAssertTrue(completed)
     }
@@ -122,8 +122,8 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
             completed = true
         }
 
-        XCTAssertEqual(adapter.resetConsentStatusCallCount, 1)
-        adapter.resetConsentStatusLastCompletion?(true)
+        XCTAssertEqual(adapter.resetConsentCallCount, 1)
+        adapter.resetConsentArguments.last?(true)
 
         XCTAssertTrue(completed)
     }
@@ -139,9 +139,9 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         }
 
         XCTAssertEqual(adapter.showConsentDialogCallCount, 1)
-        XCTAssertEqual(adapter.showConsentDialogTypeLastValue, .detailed)
-        XCTAssertEqual(adapter.showConsentDialogViewControllerLastValue, viewController)
-        adapter.showConsentDialogLastCompletion?(true)
+        XCTAssertEqual(adapter.showConsentDialogArguments.last?.type, .detailed)
+        XCTAssertEqual(adapter.showConsentDialogArguments.last?.viewController, viewController)
+        adapter.showConsentDialogArguments.last?.completion(true)
     }
 
     /// Validates that multiple observers can be added and that consent updates are forwarded to them.
@@ -162,8 +162,8 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         waitForTasksDispatchedOnMainQueue()
 
         XCTAssertEqual(observer1.onConsentChangeCallCount, 1)
-        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf] as Set<String>)
-        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.modifiedKeys, [ConsentKeys.tcf] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.fullConsents, adapter.consents)
 
         cmp.addObserver(observer2)
         adapter.consents = [ConsentKeys.tcf: "12345", "custom_key": "abcd"]
@@ -171,22 +171,22 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         waitForTasksDispatchedOnMainQueue()
 
         XCTAssertEqual(observer1.onConsentChangeCallCount, 2)
-        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, ["custom_key"] as Set<String>)
-        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.modifiedKeys, ["custom_key"] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.fullConsents, adapter.consents)
         XCTAssertEqual(observer2.onConsentChangeCallCount, 1)
-        XCTAssertEqual(observer2.onConsentChangeModifiedKeysLastValue, ["custom_key"] as Set<String>)
-        XCTAssertEqual(observer2.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer2.onConsentChangeArguments.last?.modifiedKeys, ["custom_key"] as Set<String>)
+        XCTAssertEqual(observer2.onConsentChangeArguments.last?.fullConsents, adapter.consents)
 
         adapter.consents = [ConsentKeys.tcf: "09876", "custom_key": "abcd"]
         cmp.onConsentChange(key: ConsentKeys.tcf)
         waitForTasksDispatchedOnMainQueue()
 
         XCTAssertEqual(observer1.onConsentChangeCallCount, 3)
-        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf] as Set<String>)
-        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.modifiedKeys, [ConsentKeys.tcf] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.fullConsents, adapter.consents)
         XCTAssertEqual(observer2.onConsentChangeCallCount, 2)
-        XCTAssertEqual(observer2.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf] as Set<String>)
-        XCTAssertEqual(observer2.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer2.onConsentChangeArguments.last?.modifiedKeys, [ConsentKeys.tcf] as Set<String>)
+        XCTAssertEqual(observer2.onConsentChangeArguments.last?.fullConsents, adapter.consents)
     }
 
     /// Validates that observers can be removed and consent updates are no longer forwarded to them.
@@ -236,7 +236,7 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         waitForTasksDispatchedOnMainQueue()
 
         XCTAssertEqual(observer.onConsentChangeCallCount, 1)
-        XCTAssertEqual(observer.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf] as Set<String>)
+        XCTAssertEqual(observer.onConsentChangeArguments.last?.modifiedKeys, [ConsentKeys.tcf] as Set<String>)
     }
 
     /// Validates that the cmp does not retain its observers.
@@ -306,11 +306,11 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         wait(1) // delay is set to 0.5 but we add an extra wait to account for slow runners
 
         XCTAssertEqual(observer1.onConsentChangeCallCount, 1)
-        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf, ConsentKeys.ccpaOptIn] as Set<String>)
-        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.modifiedKeys, [ConsentKeys.tcf, ConsentKeys.ccpaOptIn] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.fullConsents, adapter.consents)
         XCTAssertEqual(observer2.onConsentChangeCallCount, 1)
-        XCTAssertEqual(observer2.onConsentChangeModifiedKeysLastValue, [ConsentKeys.tcf, ConsentKeys.ccpaOptIn] as Set<String>)
-        XCTAssertEqual(observer2.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer2.onConsentChangeArguments.last?.modifiedKeys, [ConsentKeys.tcf, ConsentKeys.ccpaOptIn] as Set<String>)
+        XCTAssertEqual(observer2.onConsentChangeArguments.last?.fullConsents, adapter.consents)
 
         // Validate that a next adapter call is properly forwarded to observers
 
@@ -321,10 +321,10 @@ class ChartboostCoreConsentManagementPlatformTests: ChartboostCoreTestCase {
         wait(1) // delay is set to 0.5 but we add an extra wait to account for slow runners
 
         XCTAssertEqual(observer1.onConsentChangeCallCount, 2)
-        XCTAssertEqual(observer1.onConsentChangeModifiedKeysLastValue, [ConsentKeys.ccpaOptIn] as Set<String>)
-        XCTAssertEqual(observer1.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.modifiedKeys, [ConsentKeys.ccpaOptIn] as Set<String>)
+        XCTAssertEqual(observer1.onConsentChangeArguments.last?.fullConsents, adapter.consents)
         XCTAssertEqual(observer2.onConsentChangeCallCount, 2)
-        XCTAssertEqual(observer2.onConsentChangeModifiedKeysLastValue, [ConsentKeys.ccpaOptIn] as Set<String>)
-        XCTAssertEqual(observer2.onConsentChangeFullConsentsLastValue, adapter.consents)
+        XCTAssertEqual(observer2.onConsentChangeArguments.last?.modifiedKeys, [ConsentKeys.ccpaOptIn] as Set<String>)
+        XCTAssertEqual(observer2.onConsentChangeArguments.last?.fullConsents, adapter.consents)
     }
 }

@@ -1,7 +1,0 @@
-platform :ios, '13.0'
-
-target 'CoreDemo' do
-  pod 'ChartboostCoreSDK', '1.0.0'
-  pod 'ChartboostCoreConsentAdapterUsercentrics'
-  # pod 'ChartboostCoreConsentAdapterGoogleUserMessagingPlatform'
-end

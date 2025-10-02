@@ -1,4 +1,4 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
@@ -19,17 +19,17 @@ class LoggerTests: ChartboostCoreTestCase {
 
         func assertLogReceived(message: String, level: LogLevel) {
             XCTAssertEqual(handler1.handleCallCount, 1)
-            XCTAssertEqual(handler1.handleEntryLastValue?.message, message)
-            XCTAssertEqual(handler1.handleEntryLastValue?.logLevel, level)
-            XCTAssertEqual(handler1.handleEntryLastValue?.subsystem, "parent.child")
-            XCTAssertEqual(handler1.handleEntryLastValue?.category, "Child Category")
+            XCTAssertEqual(handler1.handleArguments.last?.message, message)
+            XCTAssertEqual(handler1.handleArguments.last?.logLevel, level)
+            XCTAssertEqual(handler1.handleArguments.last?.subsystem, "parent.child")
+            XCTAssertEqual(handler1.handleArguments.last?.category, "Child Category")
             handler1.handleCallCount = 0
 
             XCTAssertEqual(handler2.handleCallCount, 1)
-            XCTAssertEqual(handler2.handleEntryLastValue?.message, message)
-            XCTAssertEqual(handler2.handleEntryLastValue?.logLevel, level)
-            XCTAssertEqual(handler2.handleEntryLastValue?.subsystem, "parent.child")
-            XCTAssertEqual(handler2.handleEntryLastValue?.category, "Child Category")
+            XCTAssertEqual(handler2.handleArguments.last?.message, message)
+            XCTAssertEqual(handler2.handleArguments.last?.logLevel, level)
+            XCTAssertEqual(handler2.handleArguments.last?.subsystem, "parent.child")
+            XCTAssertEqual(handler2.handleArguments.last?.category, "Child Category")
             handler2.handleCallCount = 0
         }
 

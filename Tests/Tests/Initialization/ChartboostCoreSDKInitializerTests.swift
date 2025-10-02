@@ -1,12 +1,12 @@
-// Copyright 2023-2024 Chartboost, Inc.
+// Copyright 2023-2025 Chartboost, Inc.
 //
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 
-@testable import ChartboostCoreSDK
-import XCTest
+ @testable import ChartboostCoreSDK
+ import XCTest
 
-class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
+ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
     let initializer = ChartboostCoreSDKInitializer()
 
     lazy var configuration = SDKConfiguration(
@@ -19,15 +19,31 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
         ModuleMock(moduleID: "module2"),
         ConsentAdapterMock(moduleID: "module3_cmp"),
         ConsentAdapterMock(moduleID: "module4_cmp_dropped"), // only the first `ConsentAdapter` is initialized
-    ]
+    ] as [Module]
     lazy var expectedModules = attemptedModules.dropLast() // drop the last `ConsentAdapter` which won't be initilized
     let modulesObserver = ModuleObserverMock()
+
+    var moduleInitializerInstancesCreated: [ModuleInitializerMock] = []
+    var makeModuleReturnValues: [Module] = []
+
+    override func setUp() {
+        super.setUp()
+
+        mocks.moduleInitializerFactory.makeModuleInitializerHandler = { [weak self] _ in
+            let initializer = ModuleInitializerMock()
+            self?.moduleInitializerInstancesCreated.append(initializer)
+            return initializer
+        }
+        mocks.moduleFactory.makeModuleHandler = { [weak self] _, completion in
+            completion(self?.makeModuleReturnValues.removeFirst())
+        }
+    }
 
     /// Validates that a call to `initializeSDK()` makes the session start and the user agent to be fetched.
     func testInitializeTriggersSessionStartAndUserAgentFetchIfNeeded() {
         // Set session and user agent as nil so the initializer recognizes they need to be generated
         mocks.sessionInfoProvider.session = nil
-        mocks.userAgentProvider.privateCachedUserAgent = nil
+        mocks.userAgentProvider.userAgentHandler = { $0(nil) }
 
         // Initialize
         initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
@@ -35,8 +51,7 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Check that session is started and user agent is fetched
         XCTAssertEqual(mocks.sessionInfoProvider.resetCallCount, 1)
-        XCTAssertEqual(mocks.userAgentProvider.userAgentFetchCount, 1)
-        XCTAssertEqual(mocks.userAgentProvider.privateCachedUserAgent, "some user agent")
+        XCTAssertEqual(mocks.userAgentProvider.userAgentCallCount, 1)
     }
 
     /// Validates that a call to `initializeSDK()` does not make the session start nor the user agent to be fetched
@@ -44,16 +59,15 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
     func testInitializeDoesNotTriggersSessionStartNorUserAgentFetchIfNotNeeded() {
         // Set session and user agent so the initializer recognizes they do not need to be generated
         mocks.sessionInfoProvider.session = AppSession()
-        mocks.userAgentProvider.privateCachedUserAgent = "some user agent"
+        mocks.userAgentProvider.userAgentHandler = { $0("some user agent") }
 
         // Initialize
         initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
         waitForTasksDispatchedOnBackgroundQueue()
 
-        // Check that session is not started and user agent is not fetched
+        // Check that session is not reset and user agent is accessed (although internally it won't be fetched)
         XCTAssertEqual(mocks.sessionInfoProvider.resetCallCount, 0)
-        XCTAssertEqual(mocks.userAgentProvider.userAgentFetchCount, 0)
-        XCTAssertEqual(mocks.userAgentProvider.privateCachedUserAgent, "some user agent")
+        XCTAssertEqual(mocks.userAgentProvider.userAgentCallCount, 1)
     }
 
     /// Validates that a call to `initializeSDK()` with client-side modules initializes those modules immediately
@@ -64,64 +78,63 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Initialize
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 0)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 0)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 0)
         initializer.initializeSDK(configuration: configuration, moduleObserver: modulesObserver)
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check that module initializers were created for each module  and asked to initialize,
         // except the extra `ConsentAdapter` with ID "module4_cmp_dropped".
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, expectedModules.count)
-        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerModuleAllValues.map(\.moduleID), expectedModules.map(\.moduleID))
-        let moduleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
-        moduleInitializers.forEach {
+        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerArguments.map(\.moduleID), expectedModules.map(\.moduleID))
+        moduleInitializerInstancesCreated.forEach {
             XCTAssertEqual($0.initializeCallCount, 1)
         }
 
         // Check that the module observer has received a call for "module4_cmp_dropped" at this point,
         // while waiting for the other initializers to complete
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 1)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 1)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 1)
 
         // Check that the app config fetch happened at the same time
         XCTAssertEqual(mocks.appConfigRepository.fetchAppConfigCallCount, 1)
 
         // Complete modules initialization and check the observer is called
         let result1 = ModuleInitializationResult(startDate: Date(), error: nil, module: attemptedModules[0])
-        moduleInitializers[0].initializeCompletionLastValue?(result1)
+        moduleInitializerInstancesCreated[0].initializeArguments.last?.completion(result1)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 2)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 1)
-        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedResultLastValue, result1)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 1)
+        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedArguments.last, result1)
 
         let result2 = ModuleInitializationResult(startDate: Date(), error: NSError(domain: "", code: 3), module: attemptedModules[1])
-        moduleInitializers[1].initializeCompletionLastValue?(result2)
+        moduleInitializerInstancesCreated[1].initializeArguments.last?.completion(result2)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 3)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 2)
-        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedResultLastValue, result2)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 2)
+        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedArguments.last, result2)
 
         let result3 = ModuleInitializationResult(startDate: Date(), error: nil, module: attemptedModules[2])
-        moduleInitializers[2].initializeCompletionLastValue?(result3)
+        moduleInitializerInstancesCreated[2].initializeArguments.last?.completion(result3)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 4)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 2)
-        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedResultLastValue, result3)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 2)
+        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedArguments.last, result3)
 
         // Check that CMP was set since one of the modules conforms to ConsentAdapter
         XCTAssertIdentical(mocks.consentManager.adapter, attemptedModules[2])
 
         // Now make the config fetch finish successfully with no backend-side modules
         mocks.appConfigRepository.config = .build(modules: [])
-        mocks.appConfigRepository.fetchAppConfigCompletionLastValue?(nil)
+        mocks.appConfigRepository.fetchAppConfigArguments.last?.completion(nil)
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check no more modules where initialized nor calls made to the observer
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, expectedModules.count)
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, attemptedModules.count)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 2)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 2)
     }
 
     /// Validates that a call to `initializeSDK()` does not replace the CMP adapter if one was already set.
@@ -153,7 +166,7 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Check that the app config fetch started
         XCTAssertEqual(mocks.appConfigRepository.fetchAppConfigCallCount, 1)
-        XCTAssertIdentical(mocks.appConfigRepository.fetchAppConfigConfigurationLastValue, configuration)
+        XCTAssertIdentical(mocks.appConfigRepository.fetchAppConfigArguments.last?.configuration, configuration)
 
         // Make the config fetch finish successfully with some backend-side modules
         let modulesInfo: [AppConfig.ModuleInfo] = [
@@ -162,52 +175,51 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
             .init(className: nil, nonNativeClassName: "ModuleClassName3", identifier: "module3_cmp", credentials: nil),
         ]
         mocks.appConfigRepository.config = .build(modules: modulesInfo)
-        mocks.appConfigRepository.fetchAppConfigCompletionLastValue?(nil)
+        mocks.appConfigRepository.fetchAppConfigArguments.last?.completion(nil)
         // Set the modules to return by the module factory
-        mocks.moduleFactory.makeModuleReturnValues = attemptedModules
+        makeModuleReturnValues = attemptedModules
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check that the backend-side modules were instantiated using the module factory
         XCTAssertEqual(mocks.moduleFactory.makeModuleCallCount, 3)
-        XCTAssertEqual(mocks.moduleFactory.makeModuleInfoAllValues, modulesInfo)
+        XCTAssertEqual(mocks.moduleFactory.makeModuleArguments.map(\.info), modulesInfo)
 
         // Check that module initializers were created for each module and asked to initialize
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 3)
-        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerModuleAllValues.map(\.moduleID), expectedModules.map(\.moduleID))
-        let moduleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
-        moduleInitializers.forEach {
+        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerArguments.map(\.moduleID), expectedModules.map(\.moduleID))
+        moduleInitializerInstancesCreated.forEach {
             XCTAssertEqual($0.initializeCallCount, 1)
         }
 
         // Check that the module observer has not received any call at this point, since we are waiting
         // for the initializers to complete
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 0)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 0)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 0)
 
         // Complete modules initialization and check the observer is called
         let result1 = ModuleInitializationResult(startDate: Date(), error: nil, module: attemptedModules[0])
-        moduleInitializers[0].initializeCompletionLastValue?(result1)
+        moduleInitializerInstancesCreated[0].initializeArguments.last?.completion(result1)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 1)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 0)
-        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedResultLastValue, result1)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 0)
+        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedArguments.last, result1)
 
         let result2 = ModuleInitializationResult(startDate: Date(), error: NSError(domain: "", code: 3), module: attemptedModules[1])
-        moduleInitializers[1].initializeCompletionLastValue?(result2)
+        moduleInitializerInstancesCreated[1].initializeArguments.last?.completion(result2)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 2)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 1)
-        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedResultLastValue, result2)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 1)
+        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedArguments.last, result2)
 
         let result3 = ModuleInitializationResult(startDate: Date(), error: nil, module: attemptedModules[2])
-        moduleInitializers[2].initializeCompletionLastValue?(result3)
+        moduleInitializerInstancesCreated[2].initializeArguments.last?.completion(result3)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 3)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 1)
-        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedResultLastValue, result3)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 1)
+        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedArguments.last, result3)
 
         // Check that CMP was set since one of the modules conforms to ConsentAdapter
         XCTAssertIdentical(mocks.consentManager.adapter, attemptedModules[2])
@@ -215,16 +227,16 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
         // Check no more modules where initialized nor calls made to the observer
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 3)
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 3)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 1)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 1)
     }
 
     /// Validates that a call to `initializeSDK()` does not initialize modules that have the same ID as a module already initialized.
     func testInitializeIgnoresDuplicateModules() {
         // First initialize with 3 client-side modules and 0 backend-side modules
         testInitializeWithClientModulesIfNotInitialized()
-        modulesObserver.reset()
-        mocks.moduleFactory.reset()
-        mocks.moduleInitializerFactory.reset()
+        modulesObserver.resetMock()
+        mocks.moduleFactory.resetMock()
+        mocks.moduleInitializerFactory.resetMock()
 
         // Initialize again with 1 duplicate and 1 non-duplicate client-side module, 1 duplicate and 1 non-duplicate backend module.
         let clientSideModules = [
@@ -241,7 +253,7 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
             .init(className: "ModuleClassName2", nonNativeClassName: nil, identifier: "nondup2", credentials: nil),
         ]
         mocks.appConfigRepository.config = .build(modules: modulesInfo)
-        mocks.moduleFactory.makeModuleReturnValues = backendSideModules
+        makeModuleReturnValues = backendSideModules
 
         // Initialize
         initializer.initializeSDK(
@@ -256,36 +268,35 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
         // Check that only the non-duplicate backend-side module was instantiated
         // Check that the backend-side modules were instantiated using the module factory
         XCTAssertEqual(mocks.moduleFactory.makeModuleCallCount, 1)
-        XCTAssertEqual(mocks.moduleFactory.makeModuleInfoAllValues, [modulesInfo[1]])
+        XCTAssertEqual(mocks.moduleFactory.makeModuleArguments.map(\.info), [modulesInfo[1]])
 
         // Check that module initializers were created and initialized for the two non-duplicate modules
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 2)
-        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerModuleAllValues.map(\.moduleID), ["nondup1", "nondup2"])
-        let moduleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
-        moduleInitializers.forEach {
+        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerArguments.map(\.moduleID), ["nondup1", "nondup2"])
+        moduleInitializerInstancesCreated.forEach {
             XCTAssertEqual($0.initializeCallCount, 1)
         }
 
         // Check that calls were made to the module observer for those client-side ignored modules already initialized
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 1) // corresponds to "module1"
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 0)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 0)
 
         // Complete modules initialization and check the observer is called
         let result1 = ModuleInitializationResult(startDate: Date(), error: nil, module: clientSideModules[1])
-        moduleInitializers[0].initializeCompletionLastValue?(result1)
+        moduleInitializerInstancesCreated[0].initializeArguments.last?.completion(result1)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 2)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 0)
-        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedResultLastValue, result1)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 0)
+        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedArguments.last, result1)
 
         let result2 = ModuleInitializationResult(startDate: Date(), error: NSError(domain: "", code: 3), module: backendSideModules[0])
-        moduleInitializers[1].initializeCompletionLastValue?(result2)
+        moduleInitializerInstancesCreated[1].initializeArguments.last?.completion(result2)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 3)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 1)
-        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedResultLastValue, result2)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 1)
+        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedArguments.last, result2)
     }
 
     /// Validates that a call to `initializeSDK()` can retry initialization for a module previously failed
@@ -293,9 +304,9 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
     func testInitializeRetriesFailedModules() {
         // First initialize 3 modules with the 2nd one failing
         testInitializeWithClientModulesIfNotInitialized()
-        modulesObserver.reset()
-        mocks.moduleFactory.reset()
-        mocks.moduleInitializerFactory.reset()
+        modulesObserver.resetMock()
+        mocks.moduleFactory.resetMock()
+        mocks.moduleInitializerFactory.resetMock()
 
         // Initialize again the second module
         let module = attemptedModules[1]
@@ -310,18 +321,18 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Check a module initializer was created for the module and asked to initialize
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 1)
-        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerModuleAllValues.first?.moduleID, module.moduleID)
-        let moduleInitializer = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues.first
+        XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerArguments.first?.moduleID, module.moduleID)
+        let moduleInitializer = moduleInitializerInstancesCreated.first
         XCTAssertEqual(moduleInitializer?.initializeCallCount, 1)
 
         // Complete moduls initialization and check the observer is called
         let result1 = ModuleInitializationResult(startDate: Date(), error: nil, module: module)
-        moduleInitializer?.initializeCompletionLastValue?(result1)
+        moduleInitializer?.initializeArguments.last?.completion(result1)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
         XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallCount, 1)
-        XCTAssertEqual(modulesObserver.onModuleInitializationCompletedCallErrorCount, 0)
-        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedResultLastValue, result1)
+        XCTAssertEqual(modulesObserver.onModuleInitializationFailureCount, 0)
+        XCTAssertIdentical(modulesObserver.onModuleInitializationCompletedArguments.last, result1)
     }
 
     /// Validates that a call to `initializeSDK()` does not set the consent adapter module as the CMP source if
@@ -336,7 +347,7 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Complete the consent module initialization with a failure
         let result = ModuleInitializationResult(startDate: Date(), error: NSError(domain: "", code: 3), module: attemptedModules[2])
-        mocks.moduleInitializerFactory.makeModuleInitializerReturnValues[2].initializeCompletionLastValue?(result)
+        moduleInitializerInstancesCreated[2].initializeArguments.last?.completion(result)
         waitForTasksDispatchedOnBackgroundQueue()
         waitForTasksDispatchedOnMainQueue() // observer calls are made on the main queue
 
@@ -360,32 +371,33 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Check that module initializers were created only for the non-skipped module.
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 1)
-        let clientModulesInitialized = mocks.moduleInitializerFactory.makeModuleInitializerModuleAllValues
-        let clientModuleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
+        let clientModulesInitialized = mocks.moduleInitializerFactory.makeModuleInitializerArguments
+        let clientModuleInitializers = moduleInitializerInstancesCreated
+        moduleInitializerInstancesCreated = []
         XCTAssertEqual(clientModulesInitialized.count, 1)
         XCTAssertEqual(clientModulesInitialized[0].moduleID, "module2")
         XCTAssertEqual(clientModuleInitializers.count, 1)
         XCTAssertEqual(clientModuleInitializers[0].initializeCallCount, 1)
 
         // Now make the config fetch finish successfully with a few backend-side modules
-        mocks.moduleInitializerFactory.reset()  // clear existing records to make next checks easier
+        mocks.moduleInitializerFactory.resetMock()  // clear existing records to make next checks easier
         let backendSideModule1 = ModuleMock(moduleID: "backend-side-module1")
         let backendSideModule2 = ModuleMock(moduleID: "backend-side-module2")
-        mocks.moduleFactory.makeModuleReturnValues = [backendSideModule1, backendSideModule2]
+        makeModuleReturnValues = [backendSideModule1, backendSideModule2]
         let modulesInfo: [AppConfig.ModuleInfo] = [
             .init(className: "someModuleClass1", nonNativeClassName: nil, identifier: "backend-side-module1", credentials: nil),
             .init(className: "someModuleClass2", nonNativeClassName: nil, identifier: "backend-side-module2", credentials: nil),
         ]
         mocks.appConfigRepository.config = .build(modules: modulesInfo)
-        mocks.appConfigRepository.fetchAppConfigCompletionLastValue?(nil)
+        mocks.appConfigRepository.fetchAppConfigArguments.last?.completion(nil)
         waitForTasksDispatchedOnBackgroundQueue()
 
         // Check that module initializers were created only for the non-skipped module.
         XCTAssertEqual(mocks.moduleFactory.makeModuleCallCount, 2)
-        XCTAssertEqual(mocks.moduleFactory.makeModuleInfoAllValues, modulesInfo)
+        XCTAssertEqual(mocks.moduleFactory.makeModuleArguments.map(\.info), modulesInfo)
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 1)
-        let backendModulesInitialized = mocks.moduleInitializerFactory.makeModuleInitializerModuleAllValues
-        let backendModuleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
+        let backendModulesInitialized = mocks.moduleInitializerFactory.makeModuleInitializerArguments
+        let backendModuleInitializers = moduleInitializerInstancesCreated
         XCTAssertEqual(backendModulesInitialized.count, 1)
         XCTAssertEqual(backendModulesInitialized[0].moduleID, "backend-side-module1")
         XCTAssertEqual(backendModuleInitializers.count, 1)
@@ -408,14 +420,13 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Check that modules are initialized with the first Chartboost App ID
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 2)
-        let moduleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
-        XCTAssertEqual(moduleInitializers.count, 2)
-        XCTAssertEqual(moduleInitializers[0].initializeConfigurationLastValue?.chartboostAppID, "appID_1")
-        XCTAssertEqual(moduleInitializers[1].initializeConfigurationLastValue?.chartboostAppID, "appID_1")
+        XCTAssertEqual(moduleInitializerInstancesCreated.count, 2)
+        XCTAssertEqual(moduleInitializerInstancesCreated[0].initializeArguments.last?.configuration.chartboostAppID, "appID_1")
+        XCTAssertEqual(moduleInitializerInstancesCreated[1].initializeArguments.last?.configuration.chartboostAppID, "appID_1")
 
         // Now make the config fetch finish successfully
         mocks.appConfigRepository.config = .build(modules: [])
-        mocks.appConfigRepository.fetchAppConfigCompletionLastValue?(nil)
+        mocks.appConfigRepository.fetchAppConfigArguments.last?.completion(nil)
         mocks.appConfigRepository.config = .build(chartboostAppID: "appID_1") // save chartboost app ID
         waitForTasksDispatchedOnBackgroundQueue()
 
@@ -431,10 +442,10 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         // Check that modules are initialized with the first Chartboost App ID (not the new one!)
         XCTAssertEqual(mocks.moduleInitializerFactory.makeModuleInitializerCallCount, 4)
-        let secondBatchOfModuleInitializers = mocks.moduleInitializerFactory.makeModuleInitializerReturnValues
+        let secondBatchOfModuleInitializers = moduleInitializerInstancesCreated
         XCTAssertEqual(secondBatchOfModuleInitializers.count, 4)
-        XCTAssertEqual(secondBatchOfModuleInitializers[2].initializeConfigurationLastValue?.chartboostAppID, "appID_1")
-        XCTAssertEqual(secondBatchOfModuleInitializers[3].initializeConfigurationLastValue?.chartboostAppID, "appID_1")
+        XCTAssertEqual(secondBatchOfModuleInitializers[2].initializeArguments.last?.configuration.chartboostAppID, "appID_1")
+        XCTAssertEqual(secondBatchOfModuleInitializers[3].initializeArguments.last?.configuration.chartboostAppID, "appID_1")
     }
 
     /// Validates that the network status provider starts on init.
@@ -445,4 +456,10 @@ class ChartboostCoreSDKInitializerTests: ChartboostCoreTestCase {
 
         XCTAssertEqual(mocks.networkStatusProvider.startNotifierCallCount, 1)
     }
-}
+ }
+
+ extension ModuleObserverMock {
+    fileprivate var onModuleInitializationFailureCount: Int {
+        onModuleInitializationCompletedArguments.filter({ $0.error != nil }).count
+    }
+ }
